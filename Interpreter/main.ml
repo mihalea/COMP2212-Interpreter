@@ -1,6 +1,9 @@
 exception UnboundError ;;
 
+open ParseTree;;
+
 module SS = Set.Make(String)
+
 
 (* ENVIRONMENTS *)
 type 'a context = Env of (string * 'a) list
@@ -17,8 +20,8 @@ let rec lookup env str = match env with
 ;;
 
 (* Function to add an extra entry in to an environment *)
-let addBinding env str thing = match env with
-      Env(gs) -> Env ( (str, thing) :: gs ) ;;
+let addBinding env binding = match env with
+      Env(gs) -> Env ( binding :: gs ) ;;
 
 
 let splitInput line =
@@ -32,23 +35,19 @@ let rec print_list = function
 | e::l -> print_string e ; print_string " " ; print_list l
 ;;
 
-let parseLine env line lineCount =
-  print_endline line;
-  addBinding env ("K" ^ (string_of_int lineCount)) (SS.of_list (splitInput line));
-;;
 
 let rec readInput env lineCount =
   try
     let line = input_line stdin in
     if (Str.string_match (Str.regexp "^[0-9]+$") line 0) then
-      env
+      addBinding env "K" (IntRaw (int_of_string line))
     else
-      readInput (parseLine env line lineCount) (lineCount + 1);
+      readInput (addBinding env ("INPUT" ^ (string_of_int lineCount)) (SetRaw (SS.of_list (splitInput line)))) (lineCount + 1);
   with
   End_of_file -> env;
 ;;
 
 let run =
   let env = readInput (Env []) 0 in
-    SS.iter print_endline (lookup env "K0");
+    SS.iter print_endline (lookup env "INPUT2");
 ;;

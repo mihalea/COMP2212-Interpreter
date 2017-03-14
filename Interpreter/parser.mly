@@ -25,10 +25,10 @@ statements:
 statement:
       INT                           { $1 }
     | LITERAL                       { $1 }
-    | LPAREN expr RPAREN            { $1 }
+    | LPAREN expr RPAREN            { $2 }
     | IDENT                         { /* TODO */ }
     | VAR IDENT ASSIGN expr         { /* TODO */ }
-    | IF LPAREN bool_expr RPAREN 
+    | IF LPAREN bool_expr RPAREN
         LCURLY statemets RCURLY     { }
     | IF LPAREN bool_expr RPAREN
             LCURLY statements RCURLY
@@ -36,7 +36,6 @@ statement:
             LCURLY statements RCURLY { }
     | READ IDENT                    { }
     | PRINT IDENT                   { }
-    | 
+    |
 ;
 expr:
-

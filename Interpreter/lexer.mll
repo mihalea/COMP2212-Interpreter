@@ -2,46 +2,45 @@
     open Parser
 }
 let keywords =  [
-    "for"; "if"; "else"; "index"; "subset"; "in"; "read"; "print"; "var"
+    "for"; "if"; "else"; "subset"; "in"; "print"; "var"
 ];
 rule token = parse
       [' ', '\t']                               { token lexbuf }
     | ['\n']                                    { EOL }
-    | ['0'-'9']+ as num                         { INT (int_of_string num) }
-    | ['a'-'z']+                                { LITERAL }
-    | ['a'-'z']['a'-'z''0'-'9''_']+ as i        { 
-                                                    try List.assoc i keywords
-                                                    with Not_found -> IDENT
-                                                }
     | "var"                                     { VAR }
     | "for"                                     { FOR }
     | "if"                                      { IF }
     | "else"                                    { ELSE }
-    | '='                                       { ASSIGN }
-    | "read"                                    { READ }
     | "print"                                   { PRINT }
+    | "len"                                     { LENGTH }
+    | "in"                                      { BELONG }
+    | "subset"                                  { SUBSET }
+    | ['0'-'9']+ as num                         { INT (int_of_string num) }
+    | '"'['a'-'z']+'"'                                { LITERAL }
+    | ['a'-'z']['a'-'z''0'-'9''_']+ as i        {
+                                                    try List.assoc i keywords
+                                                    with Not_found -> IDENT
+                                                }
+    | '='                                       { ASSIGN }
     | eof                                       { EOF }
     | '{'                                       { LCURLY }
     | '}'                                       { RCURLY }
     | '('                                       { LPAREN }
     | ')'                                       { RPAREN }
-    | '"'                                       { QUOTE }
     | ','                                       { COMMA }
     | '+'                                       { PLUS }
     | '-'                                       { MINUS }
     | '*'                                       { TIMES }
     | '/'                                       { DIV }
+    | '%'                                       { MOD }
     | ':'                                       { EMPTY }
-    | '.'                                       { CONCAT }
+    | '^'                                       { CONCAT }
+    | '~'                                       { ADD }
     | '!'                                       { KLEENE }
-    | "index"                                   { INDEX }
-    | "len"                                     { LENGTH }
     | '|'                                       { UNION }
     | '&'                                       { INTERSECT }
     | '#'                                       { SUBTR }
-    | '%'                                       { CARTESIAN }
-    | "in"                                      { BELONG }
-    | "subset"                                  { SUBSET }
+    | '@'                                       { CARTESIAN }
     | '<'                                       { LT }
     | '>'                                       { GT }
     | "<="                                      { LEQ }
