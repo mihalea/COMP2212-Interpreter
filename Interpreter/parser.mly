@@ -36,6 +36,17 @@ statement:
             LCURLY statements RCURLY { }
     | READ IDENT                    { }
     | PRINT IDENT                   { }
-    |
+    |  
 ;
 expr:
+    | int_expr
+;
+int_expr:
+    | INT                           { $1 }
+    | LPAREN int_expr RPAREN        { $2 }
+    | int_expr PLUS int_expr        { Plus ($1,$3) }
+    | int_expr MINUS int_expr        { Minus ($1,$3) }
+    | int_expr TIMES int_expr        { Times ($1,$3) }
+    | int_expr DIV int_expr        { Times ($1,$3) }
+    | int_expr MOD int_expr        { Mod ($1,$3) }
+;

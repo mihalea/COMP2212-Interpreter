@@ -18,6 +18,13 @@ type boolVar =
 | BoolIdent of string
 ;;
 
+type generic =
+| GenInt of int
+| GenStr of string
+| GenSet of Set.Make(String).t
+| GenBln of bool
+;;
+
 type vars =
 | SetVar of setVar
 | StringVar of stringVar
@@ -31,26 +38,24 @@ type binding =
 | IntBinding of string * intVar
 | BoolBinding of string * boolVar
 
-type integerOperation =
-| Integer of intVar
-| IntegerAddition of integerOperation * integerOperation
-| IntegerSubtraction of integerOperation * integerOperation
-| IntegerMultiplication of integerOperation * integerOperation
-| IntegerDivision of integerOperation * integerOperation
-| IntegerModulo of integerOperation * integerOperation
-;;
-
 type setOperation =
 | Set of setVar
-| SetLength of setOperation
-| SetBelong of stringVar * setOperation
 | SetAddition of stringVar * setOperation
-| SetSubset of setOperation * setOperation
-| SetKleene of setOperation * integerOperation
+| SetKleene of setOperation * int 
 | SetUnion of setOperation * setOperation
 | SetIntersection of setOperation * setOperation
 | SetCartesian of setOperation * setOperation
 | SetSubtraction of setOperation * setOperation
+;;
+
+type integerOperation =
+| Integer of intVar
+| Plus of integerOperation * integerOperation
+| Minus of integerOperation * integerOperation
+| Times of integerOperation * integerOperation
+| Div of integerOperation * integerOperation
+| Mod of integerOperation * integerOperation
+| SetLength of setOperation
 ;;
 
 type stringOperation =
@@ -66,6 +71,8 @@ type booleanOperation =
 | BooleanGreaterEqualThan of integerOperation * integerOperation
 | BooleanEqual of integerOperation * integerOperation
 | BooleanNotEqual of integerOperation * integerOperation
+| SetSubset of setOperation * setOperation
+| SetBelong of stringVar * setOperation
 ;;
 
 type operation =
@@ -98,7 +105,7 @@ type exec =
 ;;
 
 type body =
-| SingleStatement of body
+| SingleStatement of statement 
 | MultiStatement of statement * body
 and
 statement =
