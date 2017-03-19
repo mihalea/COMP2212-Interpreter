@@ -3,25 +3,28 @@ OUTPUT_NAME = mysplinterpreter
 
 all: main
 
-main: lexer.cmo parser.cmo main.cmo
-	ocamlc -o $(OUTPUT_NAME) str.cma lexer.cmo parser.cmo main.cmo
+main: lexer.cmo parser.cmo main.cmo parseTree.cmo
+	ocamlc -o $(OUTPUT_NAME) str.cma lexer.cmo parser.cmo main.cmo parseTree.cmo
 
-lexer.cmo: lexer.ml parser.ml
+lexer.cmo: lexer.ml parser.ml parseTree.cmo
 	ocamlc -c lexer.ml
 
-parser.cmo: parser.ml
+parser.cmo: parser.ml parseTree.cmo
 	ocamlc -c parser.ml
 
-main.cmo: main.ml
+main.cmo: main.ml parseTree.cmo
 	ocamlc -w -10 -c main.ml
 
-lexer.ml:
+parseTree.cmo: parseTree.ml
+		ocamlc -c parseTree.ml
+
+lexer.ml: parseTree.cmo
 	ocamllex lexer.mll
 
-parser.ml: parser.mli
+parser.ml: parser.mli parseTree.cmo
 	ocamlc -c parser.mli
 
-parser.mli:
+parser.mli: parseTree.cmo
 	ocamlyacc parser.mly
 
 clean:
@@ -32,3 +35,4 @@ clean:
 	rm -f parser.ml
 	rm -f lexer.ml
 	rm -f *.cmi
+	rm -f parseTree.cmo

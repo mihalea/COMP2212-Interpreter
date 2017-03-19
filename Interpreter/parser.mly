@@ -1,13 +1,19 @@
-%{%}
+%{
+  open ParseTree
+%}
 
 %token <int> INT
+%token <string> IDENT
+%token PRINT
+%token INT_DEC
 %token SEMICOL
 %token EOF EOL
-%token PLUS
+%token FOR IN LCURLY RCURLY
+%token EQUALS PLUS
 %left PLUS
 
 %start start
-%type <int> start
+%type <ParseTree.tTerm> start
 
 %%
 
@@ -17,10 +23,24 @@ start:
 
 statements:
   | statement EOL {$1}
-  | statement EOL statements {$1}
+  | statement EOL statements { MultiStatement ($1, $3) }
 ;
 
 statement:
-  | INT {$1}
-  | INT PLUS INT {$1 + $3}
+  | dec_op { $1 }
+  | action_op { $1 }
+  | PRINT IDENT { PrintOperation ($2)}
+  | FOR IDENT IN IDENT LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
+;
+
+dec_op:
+  | INT_DEC IDENT EQUALS int_operation { IntDeclaration( $2, $4)}
+
+action_op:
+  | int_operation {$1}
+;
+
+int_operation:
+  | INT {TermInteger($1)}
+  | INT PLUS INT {TermPlus(TermInteger($1), TermInteger($3))}
 ;
