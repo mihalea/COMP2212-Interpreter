@@ -102,7 +102,9 @@ let rec processIntOp env tokens = match tokens with
     | Plus (int1, int2) -> (processIntOp env int1) + (processIntOp env int2)
     | Minus (int1, int2) -> (processIntOp env int1) - (processIntOp env int2)
     | Times (int1, int2) -> (processIntOp env int1) - (processIntOp env int2)
-    | Div (int1, int2) -> (processIntOp env int1) / (processIntOp env int2)
+    | Div (int1, int2) -> (try 
+            (processIntOp env int1) / (processIntOp env int2)
+        with Division_by_zero -> failwith "Cannot divide by 0.")
     | Mod (int1, int2) -> (processIntOp env int1) mod (processIntOp env int2)
     | SetLength set -> SS.cardinal (processSetOp env set)
 ;;
@@ -124,10 +126,17 @@ let rec processBoolOperation env tokens = match tokens with
 ;;
 
 let processOperation env tokens = match tokens with
-    | IntegerOperation intOp -> processIntOp env intOp 
-    | StringOperation strOp -> processStrOp env strOp
-    | SetOperation setOp -> processSetOp env setOp
-    | BooleanOperation boolOp -> processBoolOperation env boolOp
+    | IntegerOperation intOp -> processIntOp env intOp; () 
+    | StringOperation strOp -> processStrOp env strOp; ()
+    | SetOperation setOp -> processSetOp env setOp; ()
+    | BooleanOperation boolOp -> processBoolOperation env boolOp; ()
+;;
+
+let processDeclaration env tokens = match tokens with
+    | SetDeclaration (s, setDeclr) -> addBinding env (s, (processSetOp env setDeclr))
+    | StringDeclaration (s, strDeclr) -> addbinding env (s, (processStrOp env strDeclr))
+    | IntegerDeclaration (s, intDeclr) -> addbinding env (s, (processIntOp env intDeclr))
+    | BooleanDeclaration (s, boolDeclr) -> addBinding env (s, (processBoolOperation env boolDeclr))
 ;;
 
 let processExec env tokens = match tokens with 
