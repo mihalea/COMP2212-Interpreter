@@ -92,19 +92,39 @@ let rec processSetOp env tokens = match tokens with
     | SetKleene (set, num) -> SS.of_list []
     | SetUnion (set1, set2) -> SS.union (processSetOp env set1) (processSetOp env set2)
     | SetIntersection (set1, set2) -> SS.inter (processSetOp env set1) (processSetOp env set2)
-    | SetCartesian (set1, set2) -> SS.of_list (SS.fold (fun (x:SS.elt) -> (SS.iter (fun (y:SS.elt) -> (x,y)) (processSetOp env set2))) (processSetOp env set1) [])
+    (*| SetCartesian (set1, set2) -> SS.of_list (SS.fold (fun (x:SS.elt) -> SS.iter (fun (y:SS.elt) -> (x, y)) (processSetOp env set2)) (processSetOp env set1) [])*)
+    | SetCartesian (set1, set2) -> SS.of_list []
     | SetSubtraction (set1, set2) -> SS.diff (processSetOp env set1) (processSetOp env set2)
 ;;
 
-let processBoolOperation env tokens = match tokens with
+let rec processIntOp env tokens = match tokens with
+    | Integer integer -> lookupIntVar env integer
+    | Plus (int1, int2) -> (processIntOp env int1) + (processIntOp env int2)
+    | Minus (int1, int2) -> (processIntOp env int1) - (processIntOp env int2)
+    | Times (int1, int2) -> (processIntOp env int1) - (processIntOp env int2)
+    | Div (int1, int2) -> (processIntOp env int1) / (processIntOp env int2)
+    | Mod (int1, int2) -> (processIntOp env int1) mod (processIntOp env int2)
+    | SetLength set -> SS.cardinal (processSetOp env set)
+;;
+
+let rec processBoolOperation env tokens = match tokens with
     | Boolean booln -> lookupBoolVar env booln
-    | SetSubset (set1, set2) -> SS.subset set1 set2
-    | SetBelong (elem, set) -> SS.mem elem set
-    | _ -> ()
+    | SetSubset (set1, set2) -> SS.subset (processSetOp env set1) (processSetOp env set2)
+    | SetBelong (elem, set) -> SS.mem (processStrOp env elem) (processSetOp env set)
+    | BooleanLessThan (int1, int2) -> (processIntOp env int1) < (processIntOp env int2)
+    | BooleanLessEqualThan (int1, int2) -> (processIntOp env int1) <= (processIntOp env int2)
+    | BooleanGreaterThan (int1, int2) -> (processIntOp env int1) > (processIntOp env int2)
+    | BooleanGreaterEqualThan (int1, int2) -> (processIntOp env int1) >= (processIntOp env int2)
+    | BooleanEqual (int1, int2) -> (processIntOp env int1) == (processIntOp env int2)
+    | BooleanNotEqual (int1, int2) -> (processIntOp env int1) != (processIntOp env int2)
+    | BooleanStrEqual (str1, str2) -> false
+    | BooleanStrNotEqual (str1, str2) -> false
+    | SetSubset (set1, set2) -> SS.subset (processSetOp env set1) (processSetOp env set2)
+    | SetBelong (elem, set) -> SS.mem (processStrOp env elem) (processSetOp env set)
 ;;
 
 let processOperation env tokens = match tokens with
-    | IntegerOperation intOp -> () 
+    | IntegerOperation intOp -> processIntOp env intOp 
     | StringOperation strOp -> processStrOp env strOp
     | SetOperation setOp -> processSetOp env setOp
     | BooleanOperation boolOp -> processBoolOperation env boolOp

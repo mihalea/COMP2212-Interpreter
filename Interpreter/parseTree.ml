@@ -70,9 +70,11 @@ type booleanOperation =
 | BooleanLessEqualThan of integerOperation * integerOperation
 | BooleanGreaterEqualThan of integerOperation * integerOperation
 | BooleanEqual of integerOperation * integerOperation
+| BooleanStrEqual of stringOperation * stringOperation
+| BooleanStrNotEqual of stringOperation * stringOperation
 | BooleanNotEqual of integerOperation * integerOperation
 | SetSubset of setOperation * setOperation
-| SetBelong of stringVar * setOperation
+| SetBelong of stringOperation * setOperation
 ;;
 
 type operation =
