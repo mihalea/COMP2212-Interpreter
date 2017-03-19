@@ -68,6 +68,16 @@ let rec eval env e = match e with
   | (TermInteger x) -> env
   | (IntDeclaration(k, v)) -> addBinding env (k, v)
   | (PrintOperation x) -> print_generic env x; env
+  | (ForOperation (elem, iter, body)) -> (
+    try
+      lookup env elem;
+      failwith("Variable already in use " ^ elem)
+    with Not_found -> (
+      let env' = env in
+        SS.iter (fun (x : SS.elt) -> (eval (addBinding env' (elem, (lookup env' x))) body); ())
+          (lookup env iter);
+        env
+    ))
   (* | (TermPlus(TermInteger(n), TermInteger(m)) -> (TermInteger(n+m), env) *)
   | _ -> raise Terminated;;
 
