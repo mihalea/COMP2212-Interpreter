@@ -109,18 +109,36 @@ let rec eval env e = match e with
         with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
     )
 
-  | (TermConcat (TermString(t1), TermString(t2))) ->(TermString(t1^t2), env) 
+  | (TermConcat (TermString(t1), TermString(t2))) ->(
+      match (t1, t2) with
+        | (":",_) -> (TermString(t2), env)
+        | (_,":") -> (TermString(t1), env)
+        | (":",":") -> (TermString(t1), env)
+        | (_,_) -> (TermString(t1^t2), env)
+    ) 
   | (TermConcat (TermString(t1), e2)) -> ( 
       let (e2', env') = (eval env e2) in
         match e2' with 
-              (TermString (s)) -> ((TermString(t1^s)),env')
+              (TermString (s)) ->(
+                  match (t1, s) with 
+                | (":",_) -> (TermString(s), env)
+                | (_,":") -> (TermString(t1), env)
+                | (":",":") -> (TermString(t1), env)
+                | (_,_) -> (TermString(t1^s), env)
+              )
             | _ -> raise Illegal_operation 
   )
   | (TermConcat (e1, e2)) -> (
       let (e1', env') = (eval env e1) in
         let (e2', env'') = (eval env' e2) in
             match (e1', e2') with
-                  (TermString(s1), TermString(s2)) -> (TermString (s1 ^ s2),env)
+                  (TermString(t1), TermString(t2)) -> (
+                    match (t1, t2) with
+                        | (":",_) -> (TermString(t2), env)
+                        | (_,":") -> (TermString(t1), env)
+                        | (":",":") -> (TermString(t1), env)
+                        | (_,_) -> (TermString(t1^t2), env)
+                  )
                 | _ -> raise Illegal_operation 
   )
 
@@ -198,25 +216,42 @@ let rec eval env e = match e with
       failwith("Variable already in use " ^ elem)
     with UnboundError -> (
         try
-            let env' = env in (
-                match (lookup env' iter) with 
-                      TermSet set -> (
-                          let rec iterate set_iter = 
-                            if (SS.is_empty set_iter) then
-                                (TermNull, env)
-                            else 
-                                let chosen = SS.choose set_iter in (
-                                    eval (addBinding env' (elem, TermString(chosen))) body;
-                                    iterate (SS.remove chosen set_iter)
-                                )
-                          in
-                          iterate set;
-                      )
-                    | _ -> raise Not_a_set
-            )
+            match (lookup env iter) with 
+                  TermSet set -> (
+                      let rec iterate bindings set_iter = 
+                        if (SS.is_empty set_iter) then
+                            (TermNull, bindings)
+                        else 
+                            let chosen = SS.choose set_iter in (
+                                let (t, env') = eval (addBinding bindings (elem, TermString(chosen))) body in
+                                    iterate (remove_binding env' elem) (SS.remove chosen set_iter)
+                            )
+                      in
+                      iterate env set;
+                  )
+                | _ -> raise Not_a_set
         with UnboundError -> failwith(iter ^ " not found.")
         )
     )
+  | (ForLoop (TermVar(elem), operation, body)) -> (
+      try
+          let var_term = lookup env elem in
+            let (integer, env') = (eval env operation) in
+                match (var_term, integer) with 
+                    | (TermInteger(start_int), TermInteger(end_int)) -> (
+                        let rec iterate bindings i stop =
+                            if (i == stop) then
+                               (TermNull, bindings)
+                            else
+                                let (t, env'') = eval (addBinding bindings (elem, TermInteger(i))) body in
+                                    iterate (remove_binding env'' elem) (i + 1) stop
+                        in
+                        iterate env' start_int end_int;
+
+                    )
+                    | _ -> raise Illegal_operation
+      with UnboundError -> failwith ("Variable " ^ elem ^ " not declared.")
+  )
   (*| (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)*) 
   | _ -> raise Terminated
 ;;

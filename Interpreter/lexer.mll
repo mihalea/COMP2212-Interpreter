@@ -24,5 +24,7 @@ rule next = parse
   | ',' {COMMA}
   | "for" {FOR}
   | "in" {IN}
-  | ['a'-'z''A'-'Z''0'-'9']+ as id { IDENT id }
+  | "to" {TO}
+  | ['a'-'z''A'-'Z''0'-'9']+ as lxm { LITERAL lxm }
+  | ['a'-'z''A'-'Z''_']['a'-'z''A'-'Z''_''0'-'9']* as id { IDENT id }
   | eof { EOF }

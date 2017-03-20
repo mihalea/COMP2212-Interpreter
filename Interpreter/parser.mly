@@ -4,6 +4,7 @@
 
 %token <int> INT
 %token <string> IDENT
+%token <string> LITERAL
 %token BEGIN END
 %token PRINT
 %token VAR_DEC
@@ -12,7 +13,7 @@
 %token SEMICOL, COMMA
 %token QUOTE
 %token EOF EOL
-%token FOR IN LCURLY RCURLY
+%token FOR TO IN LCURLY RCURLY
 %token EQUALS PLUS
 %nonassoc PRINT
 %left PLUS CONCAT UNION INTERSECT DIFF
@@ -31,7 +32,7 @@ ident:
 ;
 
 literal:
-  | QUOTE IDENT QUOTE {TermString($2)}
+  | QUOTE LITERAL QUOTE {TermString($2)}
 
 statements:
   | statement SEMICOL {$1}
@@ -63,6 +64,7 @@ mut_op:
 exec_op:
   | PRINT action_op { PrintOperation ($2)}
   | FOR ident IN ident LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
+  | FOR ident TO int_operation LCURLY statements RCURLY { ForLoop ( $2, $4, $6)} 
 ;
 
 int_operation:
@@ -78,8 +80,8 @@ str_operation:
 ;
 
 args:
-    | QUOTE IDENT QUOTE {$2 :: [] }
-    | QUOTE IDENT QUOTE COMMA args { $2 :: $5 }
+    | QUOTE LITERAL QUOTE {$2 :: [] }
+    | QUOTE LITERAL QUOTE COMMA args { $2 :: $5 }
 ;
 
 set_operation:

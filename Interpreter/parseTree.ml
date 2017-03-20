@@ -12,8 +12,9 @@ type tTerm =
     | Declaration of tTerm * tTerm
 
     | PrintOperation of tTerm 
-
     | ForOperation of tTerm * tTerm * tTerm
+    | ForLoop of tTerm * tTerm * tTerm
+
 
     | TermConcat of tTerm * tTerm
     | TermMut of tTerm * tTerm
