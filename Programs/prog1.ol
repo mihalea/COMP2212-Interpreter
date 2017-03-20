@@ -1,5 +1,7 @@
 begin
+  var out = {};
   for x in INPUT0 {
-    print "a" ^ x;
+    out = out add "a" ^ x;
   };
+  print out;
 end
