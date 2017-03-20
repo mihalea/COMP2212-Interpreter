@@ -1,9 +1,9 @@
-type tTerm = 
+type tTerm =
     | TermVar of string
     | TermInteger of int
     | TermString of string
     | TermNull
-    | TermPlus of tTerm * tTerm 
+    | TermPlus of tTerm * tTerm
     | TermSet of Set.Make(String).t
     | TermArgs of string list
 
@@ -11,7 +11,7 @@ type tTerm =
 
     | Declaration of tTerm * tTerm
 
-    | PrintOperation of tTerm 
+    | PrintOperation of tTerm
     | ForOperation of tTerm * tTerm * tTerm
     | ForLoop of tTerm * tTerm * tTerm
 
@@ -21,4 +21,5 @@ type tTerm =
     | TermUnion of tTerm * tTerm
     | TermIntersection of tTerm * tTerm
     | TermDifference of tTerm * tTerm
+    | TermAdd of tTerm * tTerm
 ;;

@@ -11,11 +11,12 @@
 %token CONCAT
 %token UNION INTERSECT DIFF
 %token SEMICOL, COMMA
-%token
+%token ADD
 %token EOF EOL
 %token FOR TO IN LCURLY RCURLY
 %token EQUALS PLUS
 %nonassoc PRINT
+%left ADD
 %left PLUS CONCAT UNION INTERSECT DIFF
 
 %start start
@@ -91,4 +92,5 @@ set_operation:
   | set_operation UNION set_operation { TermUnion ($1, $3) }
   | set_operation INTERSECT set_operation { TermIntersection ( $1, $3 ) }
   | set_operation DIFF set_operation { TermDifference ( $1, $3 ) }
+  | ident ADD str_operation { TermAdd ($1, $3) }
 ;

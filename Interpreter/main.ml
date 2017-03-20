@@ -43,6 +43,7 @@ let addBinding env binding = match env with
 
 let rec isValue e = match e with
   | TermInteger(n) -> true
+  | TermString(n) -> true
   | _ -> false
 ;;
 
@@ -77,26 +78,26 @@ let rec print_generic env var = match var with
                     print_endline "}")
   | TermString x -> print_endline x
 (*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
-| _ -> print_endline "Blabla" 
+| _ -> print_endline "Blabla"
 ;;
 
 let rec eval env e = match e with
   | (MultiStatement (e1, e2)) ->let (e, env') = (eval env e1) in eval env' e2
 
   | (TermInteger x) -> (e, env)
-  | (TermString x) ->(e, env) 
+  | (TermString x) ->(e, env)
   | (TermSet x) -> (e, env)
   | (TermVar x) -> ((lookup env x), env)
   | (TermArgs args) -> (TermSet(SS.of_list args), env)
 
   | (Declaration(TermVar(k), v)) when (isValue v) -> (TermNull, addBinding env (k, v))
   | (Declaration(TermVar(k), v)) -> (
-      let (v', env') = (eval env v) in 
+      let (v', env') = (eval env v) in
         (TermNull, addBinding env (k, v'))
     )
 
   | (TermMut(TermVar(ident), action)) when (isValue action) -> (
-      try 
+      try
           let env' = (remove_binding env ident) in
             (TermNull, addBinding env' (ident, action))
         with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
@@ -109,24 +110,43 @@ let rec eval env e = match e with
         with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
     )
 
+  | (TermAdd(TermVar(var), action)) when (isValue action)-> (
+      try
+        let os = lookup env var in
+          match (os, action) with
+          | (TermSet(s), TermString(str)) ->  (TermSet(SS.add str s), env)
+          | _ -> raise Illegal_operation
+      with UnboundError -> failwith ("Variable " ^ var ^ " not declared.")
+    )
+
+  | (TermAdd(TermVar(var), action)) -> (
+    try
+      let os = lookup env var in
+        let (e', env') = eval env action in
+          match (os, e') with
+            | (TermSet(s), TermString(str)) ->  (TermSet(SS.add str s), env')
+            | _ -> raise Illegal_operation
+    with UnboundError -> failwith ("Variable " ^ var ^ "is not declared.")
+  )
+
   | (TermConcat (TermString(t1), TermString(t2))) ->(
       match (t1, t2) with
         | (":",_) -> (TermString(t2), env)
         | (_,":") -> (TermString(t1), env)
         | (":",":") -> (TermString(t1), env)
         | (_,_) -> (TermString(t1^t2), env)
-    ) 
-  | (TermConcat (TermString(t1), e2)) -> ( 
+    )
+  | (TermConcat (TermString(t1), e2)) -> (
       let (e2', env') = (eval env e2) in
-        match e2' with 
+        match e2' with
               (TermString (s)) ->(
-                  match (t1, s) with 
+                  match (t1, s) with
                 | (":",_) -> (TermString(s), env)
                 | (_,":") -> (TermString(t1), env)
                 | (":",":") -> (TermString(t1), env)
                 | (_,_) -> (TermString(t1^s), env)
               )
-            | _ -> raise Illegal_operation 
+            | _ -> raise Illegal_operation
   )
   | (TermConcat (e1, e2)) -> (
       let (e1', env') = (eval env e1) in
@@ -139,26 +159,26 @@ let rec eval env e = match e with
                         | (":",":") -> (TermString(t1), env)
                         | (_,_) -> (TermString(t1^t2), env)
                   )
-                | _ -> raise Illegal_operation 
+                | _ -> raise Illegal_operation
   )
 
   | (TermUnion (TermVar(s1), TermVar(s2))) -> (
         let set1 = (lookup env s1) in
             let set2 =  (lookup env s2) in
-                match (set1, set2) with 
+                match (set1, set2) with
                     | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.union set1' set2'), env)
                     | _ -> raise Illegal_operation
   )
   | (TermUnion (TermVar(s1), e2)) -> (
         let (e', env') = (eval env e2) in
             let res = (lookup env s1) in
-            match (res, e') with 
+            match (res, e') with
                 | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.union res' e''), env')
                 | _ -> raise Illegal_operation
     )
   | (TermUnion(e1,e2)) -> (
         let (e1', env') = (eval env e1) in
-            let (e2', env'') = (eval env' e2) in 
+            let (e2', env'') = (eval env' e2) in
                 match (e1', e2') with
                     | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.union e1'' e2''), env)
                     | _ -> raise Illegal_operation
@@ -167,20 +187,20 @@ let rec eval env e = match e with
   | (TermIntersection (TermVar(s1), TermVar(s2))) -> (
         let set1 = (lookup env s1) in
             let set2 =  (lookup env s2) in
-                match (set1, set2) with 
+                match (set1, set2) with
                     | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.inter set1' set2'), env)
                     | _ -> raise Illegal_operation
   )
   | (TermIntersection (TermVar(s1), e2)) -> (
         let (e', env') = (eval env e2) in
             let res = (lookup env s1) in
-            match (res, e') with 
+            match (res, e') with
                 | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.inter res' e''), env')
                 | _ -> raise Illegal_operation
     )
   | (TermIntersection(e1,e2)) -> (
         let (e1', env') = (eval env e1) in
-            let (e2', env'') = (eval env' e2) in 
+            let (e2', env'') = (eval env' e2) in
                 match (e1', e2') with
                     | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.inter e1'' e2''), env)
                     | _ -> raise Illegal_operation
@@ -189,20 +209,20 @@ let rec eval env e = match e with
   | (TermDifference (TermVar(s1), TermVar(s2))) -> (
         let set1 = (lookup env s1) in
             let set2 =  (lookup env s2) in
-                match (set1, set2) with 
+                match (set1, set2) with
                     | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.diff set1' set2'), env)
                     | _ -> raise Illegal_operation
   )
   | (TermDifference (TermVar(s1), e2)) -> (
         let (e', env') = (eval env e2) in
             let res = (lookup env s1) in
-            match (res, e') with 
+            match (res, e') with
                 | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.diff res' e''), env')
                 | _ -> raise Illegal_operation
     )
   | (TermDifference(e1,e2)) -> (
         let (e1', env') = (eval env e1) in
-            let (e2', env'') = (eval env' e2) in 
+            let (e2', env'') = (eval env' e2) in
                 match (e1', e2') with
                     | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.diff e1'' e2''), env)
                     | _ -> raise Illegal_operation
@@ -216,12 +236,12 @@ let rec eval env e = match e with
       failwith("Variable already in use " ^ elem)
     with UnboundError -> (
         try
-            match (lookup env iter) with 
+            match (lookup env iter) with
                   TermSet set -> (
-                      let rec iterate bindings set_iter = 
+                      let rec iterate bindings set_iter =
                         if (SS.is_empty set_iter) then
                             (TermNull, bindings)
-                        else 
+                        else
                             let chosen = SS.choose set_iter in (
                                 let (t, env') = eval (addBinding bindings (elem, TermString(chosen))) body in
                                     iterate (remove_binding env' elem) (SS.remove chosen set_iter)
@@ -237,7 +257,7 @@ let rec eval env e = match e with
       try
           let var_term = lookup env elem in
             let (integer, env') = (eval env operation) in
-                match (var_term, integer) with 
+                match (var_term, integer) with
                     | (TermInteger(start_int), TermInteger(end_int)) -> (
                         let rec iterate bindings i stop =
                             if (i == stop) then
@@ -252,7 +272,7 @@ let rec eval env e = match e with
                     | _ -> raise Illegal_operation
       with UnboundError -> failwith ("Variable " ^ elem ^ " not declared.")
   )
-  (*| (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)*) 
+  (*| (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)*)
   | _ -> raise Terminated
 ;;
 
