@@ -56,6 +56,7 @@ action_op:
 
 mut_op:
   | ident EQUALS action_op { TermMut ($1, $3) }
+  | ident CONCAT EQUALS action_op { TermMut($1, TermConcat ($1, $4)) }
 ;
 
 int_operation:
