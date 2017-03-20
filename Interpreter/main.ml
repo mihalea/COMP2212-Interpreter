@@ -2,6 +2,7 @@ exception Eof;;
 exception Terminated;;
 exception UnboundError;;
 exception StuckTerm;;
+exception Not_a_set;;
 
 open ParseTree;;
 
@@ -57,9 +58,11 @@ let rec readInput env lineCount =
 
 let print_generic env var = match (lookup env var) with
   | TermInteger x -> print_endline (string_of_int x)
-  | TermSet x -> SS.iter print_endline x
-(* | TermString x -> print_endline x
-| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
+  | TermSet x -> (print_string "{";
+                    SS.iter (fun (elem:SS.elt) -> print_string elem;print_string ",") x;
+                    print_string "}")
+  | TermString x -> print_endline x
+(*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
 | _ -> ()
 ;;
 
@@ -72,14 +75,30 @@ let rec eval env e = match e with
     try
       lookup env elem;
       failwith("Variable already in use " ^ elem)
-    with Not_found -> (
-      let env' = env in
-        SS.iter (fun (x : SS.elt) -> (eval (addBinding env' (elem, (lookup env' x))) body); ())
-          (lookup env iter);
-        env
-    ))
-  (* | (TermPlus(TermInteger(n), TermInteger(m)) -> (TermInteger(n+m), env) *)
-  | _ -> raise Terminated;;
+    with UnboundError -> (
+        try
+            let env' = env in (
+                match (lookup env' iter) with 
+                      TermSet set -> (
+                          let rec iterate set_iter = 
+                            if (SS.is_empty set_iter) then
+                                env
+                            else 
+                                let chosen = SS.choose set_iter in (
+                                    eval (addBinding env' (elem, TermString(chosen))) body;
+                                    iterate (SS.remove chosen set_iter)
+                                )
+                          in
+                          iterate set;
+                      )
+                    | _ -> raise Not_a_set
+            )
+        with UnboundError -> failwith(iter ^ " not found.")
+        )
+    )
+  (*| (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)*) 
+  | _ -> raise Terminated
+;;
 
 (* let rec evalloop env e = try (let (e',env') = (eval env e) in (evalloop env' e')) with Terminated -> if (isValue e) then e else raise StuckTerm  ;; *)
 

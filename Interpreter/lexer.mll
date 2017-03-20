@@ -6,8 +6,8 @@ open Parser
 
 rule next = parse
   | ['0'-'9']+ as id { INT (int_of_string id) }
-  | '\n' { EOL }
-  | '\t' | ' ' { next lexbuf }
+  | ';' {SEMICOL}
+  | '\t' | ' ' | '\n' { next lexbuf }
   | '+' { PLUS }
   | "int" { INT_DEC }
   | "print" { PRINT }

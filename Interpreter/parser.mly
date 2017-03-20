@@ -18,12 +18,12 @@
 %%
 
 start:
-  | statements EOF {$1};
+  | LCURLY statements RCURLY EOF {$2};
 ;
 
 statements:
-  | statement EOL {$1}
-  | statement EOL statements { MultiStatement ($1, $3) }
+  | statement SEMICOL {$1}
+  | statement SEMICOL statements { MultiStatement ($1, $3) }
 ;
 
 statement:
