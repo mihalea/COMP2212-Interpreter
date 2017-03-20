@@ -74,7 +74,7 @@ let rec print_generic env var = match var with
   | TermInteger x -> print_endline (string_of_int x)
   | TermSet x -> (print_string "{";
                     SS.iter (fun (elem:SS.elt) -> print_string elem;print_string ",") x;
-                    print_string "}")
+                    print_endline "}")
   | TermString x -> print_endline x
 (*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
 | _ -> print_endline "Blabla" 
@@ -86,6 +86,7 @@ let rec eval env e = match e with
   | (TermInteger x) -> (e, env)
   | (TermString x) ->(e, env) 
   | (TermVar x) -> ((lookup env x), env)
+  | (TermArgs args) -> (TermSet(SS.of_list args), env)
 
   | (Declaration(TermVar(k), v)) when (isValue v) -> (TermNull, addBinding env (k, v))
   | (Declaration(TermVar(k), v)) -> (

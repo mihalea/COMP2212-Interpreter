@@ -5,6 +5,8 @@ type tTerm =
     | TermNull
     | TermPlus of tTerm * tTerm 
     | TermSet of Set.Make(String).t
+    | TermArgs of string list
+
     | MultiStatement of tTerm * tTerm
 
     | Declaration of tTerm * tTerm
@@ -15,4 +17,5 @@ type tTerm =
 
     | TermConcat of tTerm * tTerm
     | TermMut of tTerm * tTerm
+    | TermUnion of tTerm * tTerm
 ;;

@@ -7,7 +7,8 @@
 %token PRINT
 %token VAR_DEC
 %token CONCAT
-%token SEMICOL
+%token UNION
+%token SEMICOL, COMMA
 %token QUOTE
 %token EOF EOL
 %token FOR IN LCURLY RCURLY
@@ -52,11 +53,12 @@ dec_op:
 action_op:
   | int_operation {$1}
   | str_operation {$1}
+  | set_operation {$1}
 ;
 
 mut_op:
   | ident EQUALS action_op { TermMut ($1, $3) }
-  | ident CONCAT EQUALS action_op { TermMut($1, TermConcat ($1, $4)) }
+  | ident CONCAT EQUALS str_operation { TermMut($1, TermConcat ($1, $4)) }
 ;
 
 int_operation:
@@ -69,4 +71,16 @@ str_operation:
   | literal {$1}
   | ident   {$1}
   | str_operation CONCAT str_operation {TermConcat ($1, $3) }
+;
+
+args:
+    | QUOTE IDENT QUOTE {$2 :: [] }
+    | QUOTE IDENT QUOTE COMMA args { $2 :: $5 }
+;
+
+set_operation:
+  | ident { $1 }
+  | LCURLY RCURLY { TermArgs([]) }
+  | LCURLY args RCURLY {TermArgs( $2 ) } 
+  | ident UNION ident { TermUnion ($1, $3) }
 ;

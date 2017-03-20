@@ -12,10 +12,12 @@ rule next = parse
   | "var" { VAR_DEC }
   | "print" { PRINT }
   | '^' {CONCAT}
+  | "union" {UNION}
   | '=' { EQUALS }
   | '{' { LCURLY }
   | '}' {RCURLY}
   | '"' {QUOTE}
+  | ',' {COMMA}
   | "for" {FOR}
   | "in" {IN}
   | ['a'-'z''A'-'Z''0'-'9']+ as id { IDENT id }
