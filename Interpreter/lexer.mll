@@ -9,6 +9,8 @@ rule next = parse
   | ';' {SEMICOL}
   | '\t' | ' ' | '\n' { next lexbuf }
   | '+' { PLUS }
+  | "begin" {BEGIN}
+  | "end" {END}
   | "var" { VAR_DEC }
   | "print" { PRINT }
   | '^' {CONCAT}

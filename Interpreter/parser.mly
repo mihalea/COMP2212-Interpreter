@@ -4,6 +4,7 @@
 
 %token <int> INT
 %token <string> IDENT
+%token BEGIN END
 %token PRINT
 %token VAR_DEC
 %token CONCAT
@@ -22,7 +23,7 @@
 %%
 
 start:
-  | LCURLY statements RCURLY EOF {$2};
+  | BEGIN statements END EOF {$2};
 ;
 
 ident:
