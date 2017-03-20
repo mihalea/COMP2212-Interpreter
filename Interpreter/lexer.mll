@@ -16,6 +16,7 @@ rule next = parse
   | '^' {CONCAT}
   | "union" {UNION}
   | "intersect" {INTERSECT}
+  | "diff" { DIFF }
   | '=' { EQUALS }
   | '{' { LCURLY }
   | '}' {RCURLY}

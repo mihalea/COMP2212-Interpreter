@@ -167,6 +167,28 @@ let rec eval env e = match e with
                     | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.inter e1'' e2''), env)
                     | _ -> raise Illegal_operation
     )
+
+  | (TermDifference (TermVar(s1), TermVar(s2))) -> (
+        let set1 = (lookup env s1) in
+            let set2 =  (lookup env s2) in
+                match (set1, set2) with 
+                    | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.diff set1' set2'), env)
+                    | _ -> raise Illegal_operation
+  )
+  | (TermDifference (TermVar(s1), e2)) -> (
+        let (e', env') = (eval env e2) in
+            let res = (lookup env s1) in
+            match (res, e') with 
+                | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.diff res' e''), env')
+                | _ -> raise Illegal_operation
+    )
+  | (TermDifference(e1,e2)) -> (
+        let (e1', env') = (eval env e1) in
+            let (e2', env'') = (eval env' e2) in 
+                match (e1', e2') with
+                    | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.diff e1'' e2''), env)
+                    | _ -> raise Illegal_operation
+    )
   | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
   | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
 

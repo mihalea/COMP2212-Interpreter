@@ -19,4 +19,5 @@ type tTerm =
     | TermMut of tTerm * tTerm
     | TermUnion of tTerm * tTerm
     | TermIntersection of tTerm * tTerm
+    | TermDifference of tTerm * tTerm
 ;;

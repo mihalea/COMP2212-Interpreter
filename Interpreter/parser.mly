@@ -8,14 +8,14 @@
 %token PRINT
 %token VAR_DEC
 %token CONCAT
-%token UNION INTERSECT
+%token UNION INTERSECT DIFF
 %token SEMICOL, COMMA
 %token QUOTE
 %token EOF EOL
 %token FOR IN LCURLY RCURLY
 %token EQUALS PLUS
 %nonassoc PRINT
-%left PLUS CONCAT UNION
+%left PLUS CONCAT UNION INTERSECT DIFF
 
 %start start
 %type <ParseTree.tTerm> start
@@ -42,8 +42,7 @@ statement:
   | dec_op { $1 }
   | action_op { $1 }
   | mut_op { $1 }
-  | PRINT action_op { PrintOperation ($2)}
-  | FOR ident IN ident LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
+  | exec_op { $1 }
 ;
 
 dec_op:
@@ -59,6 +58,11 @@ action_op:
 mut_op:
   | ident EQUALS action_op { TermMut ($1, $3) }
   | ident CONCAT EQUALS str_operation { TermMut($1, TermConcat ($1, $4)) }
+;
+
+exec_op:
+  | PRINT action_op { PrintOperation ($2)}
+  | FOR ident IN ident LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
 ;
 
 int_operation:
@@ -84,4 +88,5 @@ set_operation:
   | LCURLY args RCURLY {TermArgs( $2 ) } 
   | set_operation UNION set_operation { TermUnion ($1, $3) }
   | set_operation INTERSECT set_operation { TermIntersection ( $1, $3 ) }
+  | set_operation DIFF set_operation { TermDifference ( $1, $3 ) }
 ;

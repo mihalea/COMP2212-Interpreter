@@ -5,4 +5,6 @@ begin
     print set2;
     var set3 = set1 intersect set2;
     print set3;
+    var set4 = set1 diff set3;
+    print set4;
 end
