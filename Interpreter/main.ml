@@ -24,6 +24,18 @@ let rec lookup env str = match env with
 	)
 ;;
 
+let rec remove_binding env str = match env with
+    Env [] -> raise UnboundError
+   |Env ((name, thing) :: gs) ->
+           (
+               match (name = str) with
+               true -> Env(gs)
+               |false -> let env' = (remove_binding (Env (gs)) str) in
+                    match env' with
+                        | Env (gs') -> Env ((name,thing) :: gs')
+           )
+;;
+
 (* Function to add an extra entry in to an environment *)
 let addBinding env binding = match env with
       Env(gs) -> Env ( binding :: gs ) ;;
@@ -70,10 +82,13 @@ let rec print_generic env var = match var with
 
 let rec eval env e = match e with
   | (MultiStatement (e1, e2)) ->let (e, env') = (eval env e1) in eval env' e2
+
   | (TermInteger x) -> (e, env)
   | (TermString x) ->(e, env) 
   | (TermVar x) -> ((lookup env x), env)
+
   | (IntDeclaration(TermVar(k), v)) -> (TermNull, addBinding env (k, v))
+  | (StrDeclaration(TermVar(k), v)) -> (TermNull, addBinding env (k, v))
 
   | (TermConcat (TermString(t1), TermString(t2))) ->(TermString(t1^t2), env) 
   | (TermConcat (TermString(t1), e2)) -> ( let (e2', env') = (eval env e2) in
@@ -91,6 +106,7 @@ let rec eval env e = match e with
 
   | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
   | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
+
   | (ForOperation (TermVar(elem), TermVar(iter), body)) -> (
     try
       lookup env elem;

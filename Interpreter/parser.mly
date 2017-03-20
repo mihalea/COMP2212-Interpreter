@@ -5,7 +5,7 @@
 %token <int> INT
 %token <string> IDENT
 %token PRINT
-%token INT_DEC
+%token INT_DEC STR_DEC
 %token CONCAT
 %token SEMICOL
 %token QUOTE
@@ -40,16 +40,23 @@ statements:
 statement:
   | dec_op { $1 }
   | action_op { $1 }
+  | mut_op { $1 }
   | PRINT action_op { PrintOperation ($2)}
   | FOR ident IN ident LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
 ;
 
 dec_op:
-  | INT_DEC ident EQUALS int_operation { IntDeclaration( $2, $4)}
+  | INT_DEC ident EQUALS int_operation { IntDeclaration ( $2, $4 ) }
+  | STR_DEC ident EQUALS str_operation { StrDeclaration ( $2, $4 ) }
+;
 
 action_op:
   | int_operation {$1}
   | str_operation {$1}
+;
+
+mut_op:
+  | ident EQUALS action_op { TermMut ($1, $3) }
 ;
 
 int_operation:

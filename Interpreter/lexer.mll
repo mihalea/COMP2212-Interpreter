@@ -10,6 +10,7 @@ rule next = parse
   | '\t' | ' ' | '\n' { next lexbuf }
   | '+' { PLUS }
   | "int" { INT_DEC }
+  | "string" { STR_DEC }
   | "print" { PRINT }
   | '^' {CONCAT}
   | '=' { EQUALS }
