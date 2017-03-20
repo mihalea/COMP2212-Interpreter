@@ -92,6 +92,21 @@ let rec eval env e = match e with
       let (v', env') = (eval env v) in 
         (TermNull, addBinding env (k, v'))
     )
+
+  | (TermMut(TermVar(ident), action)) when (isValue action) -> (
+      try 
+          let env' = (remove_binding env ident) in
+            (TermNull, addBinding env' (ident, action))
+        with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
+        )
+  | (TermMut(TermVar(ident), action)) -> (
+      try
+          let env' = (remove_binding env ident) in
+            let (e', env'') = (eval env action) in
+                (TermNull, addBinding env' (ident, e'))
+        with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
+    )
+
   | (TermConcat (TermString(t1), TermString(t2))) ->(TermString(t1^t2), env) 
   | (TermConcat (TermString(t1), e2)) -> ( 
       let (e2', env') = (eval env e2) in
