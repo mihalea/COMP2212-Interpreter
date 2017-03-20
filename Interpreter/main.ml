@@ -87,14 +87,17 @@ let rec eval env e = match e with
   | (TermString x) ->(e, env) 
   | (TermVar x) -> ((lookup env x), env)
 
-  | (IntDeclaration(TermVar(k), v)) -> (TermNull, addBinding env (k, v))
-  | (StrDeclaration(TermVar(k), v)) -> (TermNull, addBinding env (k, v))
-
+  | (Declaration(TermVar(k), v)) when (isValue v) -> (TermNull, addBinding env (k, v))
+  | (Declaration(TermVar(k), v)) -> (
+      let (v', env') = (eval env v) in 
+        (TermNull, addBinding env (k, v'))
+    )
   | (TermConcat (TermString(t1), TermString(t2))) ->(TermString(t1^t2), env) 
-  | (TermConcat (TermString(t1), e2)) -> ( let (e2', env') = (eval env e2) in
-    match e2' with 
-          (TermString (s)) -> ((TermString(t1^s)),env')
-        | _ -> raise Erroneous_String_Concat
+  | (TermConcat (TermString(t1), e2)) -> ( 
+      let (e2', env') = (eval env e2) in
+        match e2' with 
+              (TermString (s)) -> ((TermString(t1^s)),env')
+            | _ -> raise Erroneous_String_Concat
   )
   | (TermConcat (e1, e2)) -> (
       let (e1', env') = (eval env e1) in
