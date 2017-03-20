@@ -49,8 +49,9 @@ let rec isValue e = match e with
 
 let splitInput line =
   let delim = Str.regexp "[{},]" in
-    let split = Str.split(delim) in
-      List.map String.trim (split line)
+    let split = Str.split(delim) in (
+      List.filter (fun e -> (String.length e) > 0) (List.map String.trim (split line));
+      )
 ;;
 
 let rec print_list = function
@@ -64,8 +65,9 @@ let rec readInput env lineCount =
     let line = input_line stdin in
     if (Str.string_match (Str.regexp "^[0-9]+$") line 0) then
       addBinding env ("K", TermInteger(int_of_string line))
-    else
+    else (
       readInput (addBinding env (("INPUT" ^ (string_of_int lineCount)), TermSet(SS.of_list (splitInput line)))) (lineCount + 1)
+    )
   with
   End_of_file -> env;
 ;;
@@ -243,7 +245,7 @@ let rec eval env e = match e with
     with UnboundError -> (
         try
             match (lookup env iter) with
-                  TermSet set -> (
+                  (TermSet set) -> (
                       let rec iterate bindings set_iter =
                         if (SS.is_empty set_iter) then
                             (TermNull, bindings)
@@ -252,9 +254,9 @@ let rec eval env e = match e with
                                 let (t, env') = eval (addBinding bindings (elem, TermString(chosen))) body in
                                     iterate (remove_binding env' elem) (SS.remove chosen set_iter)
                             )
-                      in
-                      iterate env set;
-                  )
+                      in iterate env set;
+                    )
+
                 | _ -> raise Not_a_set
         with UnboundError -> failwith(iter ^ " not found.")
         )
