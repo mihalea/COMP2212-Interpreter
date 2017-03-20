@@ -1,11 +1,11 @@
-{
-    var x = "PENGTING";
-    var y = 2;
-    for m in INPUT0 {
-        print m ^ x;
-        print "Mamaaaaa" ^ x;
-        print x ^ "mamaaa2";
-        print y;
-        print 2;
+begin
+  var w = {"a", "b", "c"};
+
+  for x in INPUT0 {
+    for i in w {
+      for j in w {
+        print x ^ i ^ j;
+      };
     };
-}
+  };
+end
