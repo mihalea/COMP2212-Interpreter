@@ -72,8 +72,8 @@ let rec readInput env lineCount =
 let rec print_generic env var = match var with
   | TermVar x -> print_generic env (lookup env x)
   | TermInteger x -> print_endline (string_of_int x)
-  | TermSet x -> (print_string "{";
-                    SS.iter (fun (elem:SS.elt) -> print_string elem;print_string ",") x;
+  | TermSet x -> (print_string "{ ";
+                    SS.iter (fun (elem:SS.elt) -> print_string elem;print_string " ") x;
                     print_endline "}")
   | TermString x -> print_endline x
 (*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
