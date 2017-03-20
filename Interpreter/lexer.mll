@@ -11,10 +11,12 @@ rule next = parse
   | '+' { PLUS }
   | "int" { INT_DEC }
   | "print" { PRINT }
+  | '^' {CONCAT}
   | '=' { EQUALS }
   | '{' { LCURLY }
   | '}' {RCURLY}
+  | '"' {QUOTE}
   | "for" {FOR}
   | "in" {IN}
-  | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']* as id { IDENT id }
+  | ['a'-'z''A'-'Z''0'-'9']+ as id { IDENT id }
   | eof { EOF }

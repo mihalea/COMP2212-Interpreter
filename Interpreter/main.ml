@@ -3,6 +3,7 @@ exception Terminated;;
 exception UnboundError;;
 exception StuckTerm;;
 exception Not_a_set;;
+exception Erroneous_String_Concat;;
 
 open ParseTree;;
 
@@ -56,22 +57,41 @@ let rec readInput env lineCount =
   End_of_file -> env;
 ;;
 
-let print_generic env var = match (lookup env var) with
+let rec print_generic env var = match var with
+  | TermVar x -> print_generic env (lookup env x)
   | TermInteger x -> print_endline (string_of_int x)
   | TermSet x -> (print_string "{";
                     SS.iter (fun (elem:SS.elt) -> print_string elem;print_string ",") x;
                     print_string "}")
   | TermString x -> print_endline x
 (*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
-| _ -> ()
+| _ -> print_endline "Blabla" 
 ;;
 
 let rec eval env e = match e with
-  | (MultiStatement (e1, e2)) -> let env' = (eval env e1) in eval env' e2
-  | (TermInteger x) -> env
-  | (IntDeclaration(k, v)) -> addBinding env (k, v)
-  | (PrintOperation x) -> print_generic env x; env
-  | (ForOperation (elem, iter, body)) -> (
+  | (MultiStatement (e1, e2)) ->let (e, env') = (eval env e1) in eval env' e2
+  | (TermInteger x) -> (e, env)
+  | (TermString x) ->(e, env) 
+  | (TermVar x) -> ((lookup env x), env)
+  | (IntDeclaration(TermVar(k), v)) -> (TermNull, addBinding env (k, v))
+
+  | (TermConcat (TermString(t1), TermString(t2))) ->(TermString(t1^t2), env) 
+  | (TermConcat (TermString(t1), e2)) -> ( let (e2', env') = (eval env e2) in
+    match e2' with 
+          (TermString (s)) -> ((TermString(t1^s)),env')
+        | _ -> raise Erroneous_String_Concat
+  )
+  | (TermConcat (e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1', e2') with
+                  (TermString(s1), TermString(s2)) -> (TermString (s1 ^ s2),env)
+                | _ -> raise Erroneous_String_Concat
+  )
+
+  | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
+  | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
+  | (ForOperation (TermVar(elem), TermVar(iter), body)) -> (
     try
       lookup env elem;
       failwith("Variable already in use " ^ elem)
@@ -82,7 +102,7 @@ let rec eval env e = match e with
                       TermSet set -> (
                           let rec iterate set_iter = 
                             if (SS.is_empty set_iter) then
-                                env
+                                (TermNull, env)
                             else 
                                 let chosen = SS.choose set_iter in (
                                     eval (addBinding env' (elem, TermString(chosen))) body;
