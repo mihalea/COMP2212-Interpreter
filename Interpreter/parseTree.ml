@@ -18,4 +18,5 @@ type tTerm =
     | TermConcat of tTerm * tTerm
     | TermMut of tTerm * tTerm
     | TermUnion of tTerm * tTerm
+    | TermIntersection of tTerm * tTerm
 ;;

@@ -8,7 +8,7 @@
 %token PRINT
 %token VAR_DEC
 %token CONCAT
-%token UNION
+%token UNION INTERSECT
 %token SEMICOL, COMMA
 %token QUOTE
 %token EOF EOL
@@ -83,4 +83,5 @@ set_operation:
   | LCURLY RCURLY { TermArgs([]) }
   | LCURLY args RCURLY {TermArgs( $2 ) } 
   | set_operation UNION set_operation { TermUnion ($1, $3) }
+  | set_operation INTERSECT set_operation { TermIntersection ( $1, $3 ) }
 ;
