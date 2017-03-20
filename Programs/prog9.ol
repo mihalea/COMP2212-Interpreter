@@ -1,4 +1,6 @@
 begin
-    var a = 2;
+    var a = ":";
     print a;
+    var b = "c" ^ a;
+    print b;
 end

@@ -20,11 +20,10 @@ rule next = parse
   | '=' { EQUALS }
   | '{' { LCURLY }
   | '}' {RCURLY}
-  | '"' {QUOTE}
   | ',' {COMMA}
   | "for" {FOR}
   | "in" {IN}
   | "to" {TO}
-  | ['a'-'z''A'-'Z''0'-'9']+ as lxm { LITERAL lxm }
-  | ['a'-'z''A'-'Z''_']['a'-'z''A'-'Z''_''0'-'9']* as id { IDENT id }
+  | '"'[':''a'-'z''A'-'Z''0'-'9']+'"' as lxm { LITERAL (List.nth (Str.split_delim (Str.regexp "\"") lxm) 1) }
+  | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']* as id { IDENT id }
   | eof { EOF }
