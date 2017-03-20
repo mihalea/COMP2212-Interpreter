@@ -76,13 +76,21 @@ let rec print_generic env var = match var with
   | TermVar x -> print_generic env (lookup env x)
   | TermInteger x -> print_endline (string_of_int x)
   | TermSet x -> (print_string "{";
-                    let length = (SS.cardinal x) in (List.iteri (fun i e ->  (
-                      print_string e;
-                      if (i < (length - 1)) then
-                        print_string ", ";
+                    let length = (SS.cardinal x) in
+                      let k = (lookup env "K") in (
+                        match k with
+                          (TermInteger kint) ->
+                            (List.iteri (fun i e ->  (
+                              if (i < kint) then (
+                                print_string e;
+                                if ((i < (length - 1)) && (i < (kint - 1))) then
+                                  print_string ", ";
+                              )
 
-                    )) (SS.elements x)
-                    );
+                            )) (SS.elements x)
+                            )
+                          | _ -> failwith "Unbound K"
+                      );
                     print_endline "}")
   | TermString x -> print_endline x
 (*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
