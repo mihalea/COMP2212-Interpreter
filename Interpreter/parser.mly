@@ -14,8 +14,7 @@
 %token FOR IN LCURLY RCURLY
 %token EQUALS PLUS
 %nonassoc PRINT
-%left PLUS
-%left CONCAT
+%left PLUS CONCAT UNION
 
 %start start
 %type <ParseTree.tTerm> start
@@ -82,5 +81,5 @@ set_operation:
   | ident { $1 }
   | LCURLY RCURLY { TermArgs([]) }
   | LCURLY args RCURLY {TermArgs( $2 ) } 
-  | ident UNION ident { TermUnion ($1, $3) }
+  | set_operation UNION set_operation { TermUnion ($1, $3) }
 ;

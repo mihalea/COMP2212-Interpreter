@@ -3,7 +3,7 @@ exception Terminated;;
 exception UnboundError;;
 exception StuckTerm;;
 exception Not_a_set;;
-exception Erroneous_String_Concat;;
+exception Illegal_operation;;
 
 open ParseTree;;
 
@@ -85,6 +85,7 @@ let rec eval env e = match e with
 
   | (TermInteger x) -> (e, env)
   | (TermString x) ->(e, env) 
+  | (TermSet x) -> (e, env)
   | (TermVar x) -> ((lookup env x), env)
   | (TermArgs args) -> (TermSet(SS.of_list args), env)
 
@@ -113,16 +114,37 @@ let rec eval env e = match e with
       let (e2', env') = (eval env e2) in
         match e2' with 
               (TermString (s)) -> ((TermString(t1^s)),env')
-            | _ -> raise Erroneous_String_Concat
+            | _ -> raise Illegal_operation 
   )
   | (TermConcat (e1, e2)) -> (
       let (e1', env') = (eval env e1) in
         let (e2', env'') = (eval env' e2) in
             match (e1', e2') with
                   (TermString(s1), TermString(s2)) -> (TermString (s1 ^ s2),env)
-                | _ -> raise Erroneous_String_Concat
+                | _ -> raise Illegal_operation 
   )
 
+  | (TermUnion (TermVar(s1), TermVar(s2))) -> (
+        let set1 = (lookup env s1) in
+            let set2 =  (lookup env s2) in
+                match (set1, set2) with 
+                    | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.union set1' set2'), env)
+                    | _ -> raise Illegal_operation
+  )
+  | (TermUnion (TermVar(s1), e2)) -> (
+        let (e', env') = (eval env e2) in
+            let res = (lookup env s1) in
+            match (res, e') with 
+                | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.union res' e''), env')
+                | _ -> raise Illegal_operation
+    )
+  | (TermUnion(e1,e2)) -> (
+        let (e1', env') = (eval env e1) in
+            let (e2', env'') = (eval env' e2) in 
+                match (e1', e2') with
+                    | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.union e1'' e2''), env)
+                    | _ -> raise Illegal_operation
+    )
   | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
   | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
 
