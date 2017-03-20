@@ -1,49 +1,30 @@
 {
-    open Parser
+
+open Parser
+
 }
-let keywords =  [
-    "for"; "if"; "else"; "subset"; "in"; "print"; "var"
-];
-rule token = parse
-      [' ', '\t']                               { token lexbuf }
-    | ['\n']                                    { EOL }
-    | "var"                                     { VAR }
-    | "for"                                     { FOR }
-    | "if"                                      { IF }
-    | "else"                                    { ELSE }
-    | "print"                                   { PRINT }
-    | "len"                                     { LENGTH }
-    | "in"                                      { BELONG }
-    | "subset"                                  { SUBSET }
-    | ['0'-'9']+ as num                         { INT (int_of_string num) }
-    | '"'['a'-'z']+'"'                                { LITERAL }
-    | ['a'-'z']['a'-'z''0'-'9''_']+ as i        {
-                                                    try List.assoc i keywords
-                                                    with Not_found -> IDENT
-                                                }
-    | '='                                       { ASSIGN }
-    | eof                                       { EOF }
-    | '{'                                       { LCURLY }
-    | '}'                                       { RCURLY }
-    | '('                                       { LPAREN }
-    | ')'                                       { RPAREN }
-    | ','                                       { COMMA }
-    | '+'                                       { PLUS }
-    | '-'                                       { MINUS }
-    | '*'                                       { TIMES }
-    | '/'                                       { DIV }
-    | '%'                                       { MOD }
-    | ':'                                       { EMPTY }
-    | '^'                                       { CONCAT }
-    | '~'                                       { ADD }
-    | '!'                                       { KLEENE }
-    | '|'                                       { UNION }
-    | '&'                                       { INTERSECT }
-    | '#'                                       { SUBTR }
-    | '@'                                       { CARTESIAN }
-    | '<'                                       { LT }
-    | '>'                                       { GT }
-    | "<="                                      { LEQ }
-    | ">="                                      { GEQ }
-    | "=="                                      { EQ }
-    | "!="                                      { NEQ }
+
+rule next = parse
+  | ['0'-'9']+ as id { INT (int_of_string id) }
+  | ';' {SEMICOL}
+  | '\t' | ' ' | '\n' { next lexbuf }
+  | '+' { PLUS }
+  | "begin" {BEGIN}
+  | "end" {END}
+  | "var" { VAR_DEC }
+  | "print" { PRINT }
+  | '^' {CONCAT}
+  | "union" {UNION}
+  | "intersect" {INTERSECT}
+  | "diff" { DIFF }
+  | "add" { ADD }
+  | '=' { EQUALS }
+  | '{' { LCURLY }
+  | '}' {RCURLY}
+  | ',' {COMMA}
+  | "for" {FOR}
+  | "in" {IN}
+  | "to" {TO}
+  | '"'[':''a'-'z''A'-'Z''0'-'9']+'"' as lxm { LITERAL (List.nth (Str.split_delim (Str.regexp "\"") lxm) 1) }
+  | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']* as id { IDENT id }
+  | eof { EOF }

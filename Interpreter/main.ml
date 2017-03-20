@@ -1,15 +1,17 @@
-exception UnboundError ;;
-exception NotAnInt ;;
-exception NotStringType ;;
-exception NotBooleanType ;;
-exception NotASet ;;
+exception Eof;;
+exception Terminated;;
+exception UnboundError;;
+exception StuckTerm;;
+exception Not_a_set;;
+exception Illegal_operation;;
 
 open ParseTree;;
 
 module SS = Set.Make(String)
 
 (* ENVIRONMENTS *)
-type 'a context = Env of (string * generic) list
+type 'a context = Env of (string * 'a) list
+
 
 (* Function to look up the type of a string name variable in a type environment *)
 let rec lookup env str = match env with
@@ -22,10 +24,28 @@ let rec lookup env str = match env with
 	)
 ;;
 
+let rec remove_binding env str = match env with
+    Env [] -> raise UnboundError
+   |Env ((name, thing) :: gs) ->
+           (
+               match (name = str) with
+               true -> Env(gs)
+               |false -> let env' = (remove_binding (Env (gs)) str) in
+                    match env' with
+                        | Env (gs') -> Env ((name,thing) :: gs')
+           )
+;;
+
 (* Function to add an extra entry in to an environment *)
 let addBinding env binding = match env with
       Env(gs) -> Env ( binding :: gs ) ;;
 
+
+let rec isValue e = match e with
+  | TermInteger(n) -> true
+  | TermString(n) -> true
+  | _ -> false
+;;
 
 let splitInput line =
   let delim = Str.regexp "[{},]" in
@@ -43,140 +63,227 @@ let rec readInput env lineCount =
   try
     let line = input_line stdin in
     if (Str.string_match (Str.regexp "^[0-9]+$") line 0) then
-      addBinding env ("K",GenInt(int_of_string line))
+      addBinding env ("K", TermInteger(int_of_string line))
     else
-      readInput (addBinding env (("INPUT" ^ (string_of_int lineCount)), GenSet(SS.of_list (splitInput line)))) (lineCount + 1);
+      readInput (addBinding env (("INPUT" ^ (string_of_int lineCount)), TermSet(SS.of_list (splitInput line)))) (lineCount + 1)
   with
   End_of_file -> env;
 ;;
 
-let print_generic gen = match gen with
-| GenStr x -> print_endline x
-| GenInt x -> print_endline (string_of_int x)
-| GenSet x -> SS.iter print_endline x
-| GenBln x -> if x then print_endline "true" else print_endline "false" 
+let rec print_generic env var = match var with
+  | TermVar x -> print_generic env (lookup env x)
+  | TermInteger x -> print_endline (string_of_int x)
+  | TermSet x -> (print_string "{ ";
+                    SS.iter (fun (elem:SS.elt) -> print_string elem;print_string " ") x;
+                    print_endline "}")
+  | TermString x -> print_endline x
+(*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
+| _ -> print_endline "Blabla"
 ;;
 
-let lookupIntVar env iv = match iv with
-    | IntRaw i -> i
-    | IntIdent i -> try (match (lookup env i) with GenInt x -> x | _ -> raise NotAnInt) 
-            with Not_found -> failwith ("Variable "^i^" not defined")
+let rec eval env e = match e with
+  | (MultiStatement (e1, e2)) ->let (e, env') = (eval env e1) in eval env' e2
+
+  | (TermInteger x) -> (e, env)
+  | (TermString x) ->(e, env)
+  | (TermSet x) -> (e, env)
+  | (TermVar x) -> ((lookup env x), env)
+  | (TermArgs args) -> (TermSet(SS.of_list args), env)
+
+  | (Declaration(TermVar(k), v)) when (isValue v) -> (TermNull, addBinding env (k, v))
+  | (Declaration(TermVar(k), v)) -> (
+      let (v', env') = (eval env v) in
+        (TermNull, addBinding env (k, v'))
+    )
+
+  | (TermMut(TermVar(ident), action)) when (isValue action) -> (
+      try
+          let env' = (remove_binding env ident) in
+            (TermNull, addBinding env' (ident, action))
+        with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
+        )
+  | (TermMut(TermVar(ident), action)) -> (
+      try
+          let env' = (remove_binding env ident) in
+            let (e', env'') = (eval env action) in
+                (TermNull, addBinding env' (ident, e'))
+        with UnboundError -> failwith ("Variable " ^ ident ^ " not declared.")
+    )
+
+  | (TermAdd(TermVar(var), action)) when (isValue action)-> (
+      try
+        let os = lookup env var in
+          match (os, action) with
+          | (TermSet(s), TermString(str)) ->  (TermSet(SS.add str s), env)
+          | _ -> raise Illegal_operation
+      with UnboundError -> failwith ("Variable " ^ var ^ " not declared.")
+    )
+
+  | (TermAdd(TermVar(var), action)) -> (
+    try
+      let os = lookup env var in
+        let (e', env') = eval env action in
+          match (os, e') with
+            | (TermSet(s), TermString(str)) ->  (TermSet(SS.add str s), env')
+            | _ -> raise Illegal_operation
+    with UnboundError -> failwith ("Variable " ^ var ^ "is not declared.")
+  )
+
+  | (TermConcat (TermString(t1), TermString(t2))) ->(
+      match (t1, t2) with
+        | (":",_) -> (TermString(t2), env)
+        | (_,":") -> (TermString(t1), env)
+        | (":",":") -> (TermString(t1), env)
+        | (_,_) -> (TermString(t1^t2), env)
+    )
+  | (TermConcat (TermString(t1), e2)) -> (
+      let (e2', env') = (eval env e2) in
+        match e2' with
+              (TermString (s)) ->(
+                  match (t1, s) with
+                | (":",_) -> (TermString(s), env)
+                | (_,":") -> (TermString(t1), env)
+                | (":",":") -> (TermString(t1), env)
+                | (_,_) -> (TermString(t1^s), env)
+              )
+            | _ -> raise Illegal_operation
+  )
+  | (TermConcat (e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1', e2') with
+                  (TermString(t1), TermString(t2)) -> (
+                    match (t1, t2) with
+                        | (":",_) -> (TermString(t2), env)
+                        | (_,":") -> (TermString(t1), env)
+                        | (":",":") -> (TermString(t1), env)
+                        | (_,_) -> (TermString(t1^t2), env)
+                  )
+                | _ -> raise Illegal_operation
+  )
+
+  | (TermUnion (TermVar(s1), TermVar(s2))) -> (
+        let set1 = (lookup env s1) in
+            let set2 =  (lookup env s2) in
+                match (set1, set2) with
+                    | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.union set1' set2'), env)
+                    | _ -> raise Illegal_operation
+  )
+  | (TermUnion (TermVar(s1), e2)) -> (
+        let (e', env') = (eval env e2) in
+            let res = (lookup env s1) in
+            match (res, e') with
+                | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.union res' e''), env')
+                | _ -> raise Illegal_operation
+    )
+  | (TermUnion(e1,e2)) -> (
+        let (e1', env') = (eval env e1) in
+            let (e2', env'') = (eval env' e2) in
+                match (e1', e2') with
+                    | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.union e1'' e2''), env)
+                    | _ -> raise Illegal_operation
+    )
+
+  | (TermIntersection (TermVar(s1), TermVar(s2))) -> (
+        let set1 = (lookup env s1) in
+            let set2 =  (lookup env s2) in
+                match (set1, set2) with
+                    | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.inter set1' set2'), env)
+                    | _ -> raise Illegal_operation
+  )
+  | (TermIntersection (TermVar(s1), e2)) -> (
+        let (e', env') = (eval env e2) in
+            let res = (lookup env s1) in
+            match (res, e') with
+                | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.inter res' e''), env')
+                | _ -> raise Illegal_operation
+    )
+  | (TermIntersection(e1,e2)) -> (
+        let (e1', env') = (eval env e1) in
+            let (e2', env'') = (eval env' e2) in
+                match (e1', e2') with
+                    | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.inter e1'' e2''), env)
+                    | _ -> raise Illegal_operation
+    )
+
+  | (TermDifference (TermVar(s1), TermVar(s2))) -> (
+        let set1 = (lookup env s1) in
+            let set2 =  (lookup env s2) in
+                match (set1, set2) with
+                    | (TermSet (set1'), TermSet (set2')) -> (TermSet(SS.diff set1' set2'), env)
+                    | _ -> raise Illegal_operation
+  )
+  | (TermDifference (TermVar(s1), e2)) -> (
+        let (e', env') = (eval env e2) in
+            let res = (lookup env s1) in
+            match (res, e') with
+                | (TermSet(res'),TermSet(e'')) -> (TermSet(SS.diff res' e''), env')
+                | _ -> raise Illegal_operation
+    )
+  | (TermDifference(e1,e2)) -> (
+        let (e1', env') = (eval env e1) in
+            let (e2', env'') = (eval env' e2) in
+                match (e1', e2') with
+                    | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.diff e1'' e2''), env)
+                    | _ -> raise Illegal_operation
+    )
+  | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
+  | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
+
+  | (ForOperation (TermVar(elem), TermVar(iter), body)) -> (
+    try
+      lookup env elem;
+      failwith("Variable already in use " ^ elem)
+    with UnboundError -> (
+        try
+            match (lookup env iter) with
+                  TermSet set -> (
+                      let rec iterate bindings set_iter =
+                        if (SS.is_empty set_iter) then
+                            (TermNull, bindings)
+                        else
+                            let chosen = SS.choose set_iter in (
+                                let (t, env') = eval (addBinding bindings (elem, TermString(chosen))) body in
+                                    iterate (remove_binding env' elem) (SS.remove chosen set_iter)
+                            )
+                      in
+                      iterate env set;
+                  )
+                | _ -> raise Not_a_set
+        with UnboundError -> failwith(iter ^ " not found.")
+        )
+    )
+  | (ForLoop (TermVar(elem), operation, body)) -> (
+      try
+          let var_term = lookup env elem in
+            let (integer, env') = (eval env operation) in
+                match (var_term, integer) with
+                    | (TermInteger(start_int), TermInteger(end_int)) -> (
+                        let rec iterate bindings i stop =
+                            if (i == stop) then
+                               (TermNull, bindings)
+                            else
+                                let (t, env'') = eval (addBinding bindings (elem, TermInteger(i))) body in
+                                    iterate (remove_binding env'' elem) (i + 1) stop
+                        in
+                        iterate env' start_int end_int;
+
+                    )
+                    | _ -> raise Illegal_operation
+      with UnboundError -> failwith ("Variable " ^ elem ^ " not declared.")
+  )
+  (*| (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)*)
+  | _ -> raise Terminated
 ;;
 
-let lookupStrVar env tokens = match tokens with
-    | StringRaw str -> str
-    | StringIdent str -> try (match (lookup env str) with GenStr x -> x | _ -> raise NotStringType)
-            with Not_found -> failwith ("Variable "^str^" not defined")
-;;
+(* let rec evalloop env e = try (let (e',env') = (eval env e) in (evalloop env' e')) with Terminated -> if (isValue e) then e else raise StuckTerm  ;; *)
 
-let lookupBoolVar env tokens = match tokens with
-    | BoolRaw bln -> bln
-    | BoolIdent bln -> try (match (lookup env bln) with GenBln x -> x | _ -> raise NotBooleanType)
-            with Not_found -> failwith ("Variable "^bln^" not defined")
-;;
-
-let lookupSetVar env tokens = match tokens with
-    | SetRaw set -> set
-    | SetIdent set -> try (match (lookup env set) with GenSet x -> x | _ -> raise NotASet)
-            with Not_found -> failwith ("Variable"^set^"not found")
-;;
-
-let rec processStrOp env tokens = match tokens with
-    | String str -> lookupStrVar env str
-    | StringConcat (str1, str2) -> (processStrOp env str1) ^ (processStrOp env str2) 
-;;
-
-let rec processSetOp env tokens = match tokens with
-    | Set set -> lookupSetVar env set
-    | SetAddition (elem,set) -> SS.add (lookupStrVar env elem) (processSetOp env set)
-    | SetKleene (set, num) -> SS.of_list []
-    | SetUnion (set1, set2) -> SS.union (processSetOp env set1) (processSetOp env set2)
-    | SetIntersection (set1, set2) -> SS.inter (processSetOp env set1) (processSetOp env set2)
-    (*| SetCartesian (set1, set2) -> SS.of_list (SS.fold (fun (x:SS.elt) -> SS.iter (fun (y:SS.elt) -> (x, y)) (processSetOp env set2)) (processSetOp env set1) [])*)
-    | SetCartesian (set1, set2) -> SS.of_list []
-    | SetSubtraction (set1, set2) -> SS.diff (processSetOp env set1) (processSetOp env set2)
-;;
-
-let rec processIntOp env tokens = match tokens with
-    | Integer integer -> lookupIntVar env integer
-    | Plus (int1, int2) -> (processIntOp env int1) + (processIntOp env int2)
-    | Minus (int1, int2) -> (processIntOp env int1) - (processIntOp env int2)
-    | Times (int1, int2) -> (processIntOp env int1) - (processIntOp env int2)
-    | Div (int1, int2) -> (try 
-            (processIntOp env int1) / (processIntOp env int2)
-        with Division_by_zero -> failwith "Cannot divide by 0.")
-    | Mod (int1, int2) -> (processIntOp env int1) mod (processIntOp env int2)
-    | SetLength set -> SS.cardinal (processSetOp env set)
-;;
-
-let rec processBoolOperation env tokens = match tokens with
-    | Boolean booln -> lookupBoolVar env booln
-    | SetSubset (set1, set2) -> SS.subset (processSetOp env set1) (processSetOp env set2)
-    | SetBelong (elem, set) -> SS.mem (processStrOp env elem) (processSetOp env set)
-    | BooleanLessThan (int1, int2) -> (processIntOp env int1) < (processIntOp env int2)
-    | BooleanLessEqualThan (int1, int2) -> (processIntOp env int1) <= (processIntOp env int2)
-    | BooleanGreaterThan (int1, int2) -> (processIntOp env int1) > (processIntOp env int2)
-    | BooleanGreaterEqualThan (int1, int2) -> (processIntOp env int1) >= (processIntOp env int2)
-    | BooleanEqual (int1, int2) -> (processIntOp env int1) == (processIntOp env int2)
-    | BooleanNotEqual (int1, int2) -> (processIntOp env int1) != (processIntOp env int2)
-    | BooleanStrEqual (str1, str2) -> false
-    | BooleanStrNotEqual (str1, str2) -> false
-    | SetSubset (set1, set2) -> SS.subset (processSetOp env set1) (processSetOp env set2)
-    | SetBelong (elem, set) -> SS.mem (processStrOp env elem) (processSetOp env set)
-;;
-
-let processOperation env tokens = match tokens with
-    | IntegerOperation intOp -> processIntOp env intOp; () 
-    | StringOperation strOp -> processStrOp env strOp; ()
-    | SetOperation setOp -> processSetOp env setOp; ()
-    | BooleanOperation boolOp -> processBoolOperation env boolOp; ()
-;;
-
-let processDeclaration env tokens = match tokens with
-    | SetDeclaration (s, setDeclr) -> addBinding env (s, (processSetOp env setDeclr))
-    | StringDeclaration (s, strDeclr) -> addbinding env (s, (processStrOp env strDeclr))
-    | IntegerDeclaration (s, intDeclr) -> addbinding env (s, (processIntOp env intDeclr))
-    | BooleanDeclaration (s, boolDeclr) -> addBinding env (s, (processBoolOperation env boolDeclr))
-;;
-
-let processExec env tokens = match tokens with 
-    | Operation op -> processOperation env op
-    | Declaration dec -> processDeclaration env dec
-    | Mutation mut -> processMutation env mut
-    | Print pr -> processPrint env print
-;;
-
-let processTokens env tokens = match tokens with
-    | Body body -> processBody env tokens
-and processBody env tokens = match tokens with
-    | SingleStatement s -> processStatement env s
-    | MultiStatement (s, b) -> processStatement env s; processBody env b
-and processStatement env tokens = match tokens with
-    | IfStatement s -> processIf env tokens
-    | ForStatement s -> processFor env tokens
-    | ExecStatement s -> processExec env tokens
-and processIf env tokens = match tokens with
-    | If (bool, body) -> if (processBoolExec env bool) then (processBody env body)
-    | IfElse (bool, body, elBody) -> if (processBoolExec env bool) then (processBody env body) else (processBody env elBody)
-and processFor env tokens = match tokens with
-    | ForEach (elem, coll, body) ->
-            (
-                try
-                    lookup env elem
-                    failwith ("Variable already in use: " ^elem^"")
-                with Not_found -> 
-                    (
-                        try
-                            SS.iter (fun (x : SS.elt) -> processBody (addBinding env (elem, lookup env x)) body) (lookup env coll)
-                        with Not_found -> failwith ("No collection named "^coll^" found.")))
-;;
 
 let run =
   let env = readInput (Env []) 0 in
-    try 
+    try
       let lexbuf = Lexing.from_channel (open_in Sys.argv.(1)) in
-        let token_stream = (Parser.main Lexer.token lexbuf) in
-          processTokens env token_stream        
-    with Lexer.Eof ->
+        let token_stream = (Parser.start Lexer.next lexbuf) in
+          eval env token_stream
+    with Eof ->
         exit 0
-;;

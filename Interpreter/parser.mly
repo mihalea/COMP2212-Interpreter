@@ -1,52 +1,96 @@
+%{
+  open ParseTree
+%}
+
 %token <int> INT
-%token <string> LITERAL
 %token <string> IDENT
-%token VAR FOR IF ELSE
-%token ASSIGN
-%token READ PRINT
+%token <string> LITERAL
+%token BEGIN END
+%token PRINT
+%token VAR_DEC
+%token CONCAT
+%token UNION INTERSECT DIFF
+%token SEMICOL, COMMA
+%token ADD
 %token EOF EOL
-%token LCURLY RCURLY LPAREN RPAREN QUOTE COMMA
-%token PLUS MINUS TIMES DIV
-%token EMPTY
-%token KLEENE LENGTH INDEX
-%token CONCAT UNION INTERSECT SUBTR CARTESIAN SUBSET
-%token BELONG
-%token LT GT LEQ GEQ EQ NEQ
-%start main
-%type <int> main
+%token FOR TO IN LCURLY RCURLY
+%token EQUALS PLUS
+%nonassoc PRINT
+%left ADD
+%left PLUS CONCAT UNION INTERSECT DIFF
+
+%start start
+%type <ParseTree.tTerm> start
+
 %%
-main:
-    statements EOF                  { raise End_of_file }
+
+start:
+  | BEGIN statements END EOF {$2};
 ;
+
+ident:
+  | IDENT {TermVar($1)}
+;
+
+literal:
+  | LITERAL {TermString($1)}
+
 statements:
-    | { }
-    | statement EOL statements      {   }
+  | statement SEMICOL {$1}
+  | statement SEMICOL statements { MultiStatement ($1, $3) }
 ;
+
 statement:
-      INT                           { $1 }
-    | LITERAL                       { $1 }
-    | LPAREN expr RPAREN            { $2 }
-    | IDENT                         { /* TODO */ }
-    | VAR IDENT ASSIGN expr         { /* TODO */ }
-    | IF LPAREN bool_expr RPAREN
-        LCURLY statemets RCURLY     { }
-    | IF LPAREN bool_expr RPAREN
-            LCURLY statements RCURLY
-        ELSE
-            LCURLY statements RCURLY { }
-    | READ IDENT                    { }
-    | PRINT IDENT                   { }
-    |  
+  | dec_op { $1 }
+  | action_op { $1 }
+  | mut_op { $1 }
+  | exec_op { $1 }
 ;
-expr:
-    | int_expr
+
+dec_op:
+  | VAR_DEC ident EQUALS action_op  { Declaration ($2, $4) }
 ;
-int_expr:
-    | INT                           { $1 }
-    | LPAREN int_expr RPAREN        { $2 }
-    | int_expr PLUS int_expr        { Plus ($1,$3) }
-    | int_expr MINUS int_expr        { Minus ($1,$3) }
-    | int_expr TIMES int_expr        { Times ($1,$3) }
-    | int_expr DIV int_expr        { Times ($1,$3) }
-    | int_expr MOD int_expr        { Mod ($1,$3) }
+
+action_op:
+  | int_operation {$1}
+  | str_operation {$1}
+  | set_operation {$1}
+;
+
+mut_op:
+  | ident EQUALS action_op { TermMut ($1, $3) }
+  | ident CONCAT EQUALS str_operation { TermMut($1, TermConcat ($1, $4)) }
+;
+
+exec_op:
+  | PRINT action_op { PrintOperation ($2)}
+  | FOR ident IN ident LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
+  | FOR ident TO int_operation LCURLY statements RCURLY { ForLoop ( $2, $4, $6)}
+;
+
+int_operation:
+  | INT {TermInteger($1)}
+  | ident {$1}
+  | int_operation PLUS int_operation {TermPlus($1,$3)}
+;
+
+str_operation:
+  | literal {$1}
+  | ident   {$1}
+  | str_operation CONCAT str_operation {TermConcat ($1, $3) }
+;
+
+args:
+    |  LITERAL  {$1 :: [] }
+    |  LITERAL  COMMA args { $1 :: $3 }
+;
+
+set_operation:
+  | ident { $1 }
+  | LCURLY RCURLY { TermArgs([]) }
+  | LCURLY args RCURLY {TermArgs( $2 ) }
+  | set_operation UNION set_operation { TermUnion ($1, $3) }
+  | set_operation INTERSECT set_operation { TermIntersection ( $1, $3 ) }
+  | set_operation DIFF set_operation { TermDifference ( $1, $3 ) }
+  | ident ADD str_operation { TermAdd ($1, $3) }
 ;
