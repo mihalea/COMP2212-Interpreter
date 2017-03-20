@@ -5,7 +5,7 @@
 %token <int> INT
 %token <string> IDENT
 %token PRINT
-%token INT_DEC STR_DEC
+%token VAR_DEC
 %token CONCAT
 %token SEMICOL
 %token QUOTE
@@ -46,8 +46,7 @@ statement:
 ;
 
 dec_op:
-  | INT_DEC ident EQUALS int_operation { IntDeclaration ( $2, $4 ) }
-  | STR_DEC ident EQUALS str_operation { StrDeclaration ( $2, $4 ) }
+  | VAR_DEC ident EQUALS action_op  { Declaration ($2, $4) }
 ;
 
 action_op:

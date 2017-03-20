@@ -6,10 +6,13 @@ type tTerm =
     | TermPlus of tTerm * tTerm 
     | TermSet of Set.Make(String).t
     | MultiStatement of tTerm * tTerm
-    | IntDeclaration of tTerm * tTerm 
-    | StrDeclaration of tTerm * tTerm
+
+    | Declaration of tTerm * tTerm
+
     | PrintOperation of tTerm 
+
     | ForOperation of tTerm * tTerm * tTerm
+
     | TermConcat of tTerm * tTerm
     | TermMut of tTerm * tTerm
 ;;
