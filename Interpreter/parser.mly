@@ -22,10 +22,11 @@
 %token LCURLY RCURLY LPAREN RPAREN
 %token EQUALS PLUS MINUS TIMES DIV MOD
 %nonassoc PRINT
+%left EQUALS
 %left ADD
-%left LT LTE GT GTE EQ NEQ
+%nonassoc LT LTE GT GTE EQ NEQ
 %left PLUS CONCAT UNION INTERSECT DIFF
-%nonassoc NOT
+%left NOT 
 
 %start start
 %type <ParseTree.tTerm> start
@@ -66,10 +67,10 @@ dec_op:
 ;
 
 action_op:
+  | bool_operation {$1}
   | int_operation {$1}
   | str_operation {$1}
   | set_operation {$1}
-  | bool_operation {$1}
 ;
 
 mut_op:

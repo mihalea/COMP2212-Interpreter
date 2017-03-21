@@ -468,6 +468,7 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   |(TermEq (TermVar(v1), TermVar(v2))) -> (
+      print_endline("VARVAR");
       let val1 = lookup env v1 in
         let val2 = lookup env v2 in
             match (val1, val2) with
@@ -492,6 +493,7 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   |(TermEq (TermVar(v1), e2)) -> (
+      print_endline("VAREXPR");
       let (val2, env') = (eval env e2) in
           let val1 = lookup env' v1 in
             match (val1, val2) with
@@ -516,6 +518,7 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   |(TermEq (e1,e2)) -> (
+      print_endline("EXPREXPR");
       let (val1,env') = (eval env e1) in
         let (val2, env'') = (eval env' e2) in
             match (val1, val2) with
@@ -540,6 +543,7 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   |(TermNeq (TermVar(v1), TermVar(v2))) -> (
+      print_endline("VARVAR");
       let val1 = lookup env v1 in
         let val2 = lookup env v2 in
             match (val1, val2) with
@@ -564,6 +568,7 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   |(TermNeq (TermVar(v1), e2)) -> (
+      print_endline("VAREXPR");
       let (val2, env') = (eval env e2) in
         let val1 = lookup env' v1 in
             match (val1, val2) with
@@ -588,6 +593,7 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   |(TermNeq (e1,e2)) -> (
+      print_endline("EXPREXPR");
       let (val1,env') = (eval env e1) in
         let (val2, env'') = (eval env' e2) in
             match (val1, val2) with
@@ -612,12 +618,14 @@ let rec eval env e = match e with
                 | _ -> raise Illegal_operation
   )
   | (TermNot (TermVar (v1))) -> (
+      print_endline ("NOTVAR");
       let val1 = lookup env v1 in
         match val1 with 
             | TermBool(bool1) -> (TermBool(not bool1),env)
             | _ -> raise Illegal_operation
   )
   | (TermNot (e1)) -> (
+      print_endline ("NOTEXPR");
         let (e1', env') = (eval env e1) in
             match e1' with 
                 | TermBool(bool1) -> (TermBool(not bool1),env)
