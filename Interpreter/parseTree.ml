@@ -1,9 +1,16 @@
 type tTerm =
+    | TermNull
     | TermVar of string
     | TermInteger of int
     | TermString of string
-    | TermNull
+    | TermBool of bool
+
     | TermPlus of tTerm * tTerm
+    | TermMinus of tTerm * tTerm
+    | TermMult of tTerm * tTerm
+    | TermDiv of tTerm * tTerm
+    | TermMod of tTerm * tTerm
+
     | TermSet of Set.Make(String).t
     | TermArgs of string list
 
@@ -14,6 +21,8 @@ type tTerm =
     | PrintOperation of tTerm
     | ForOperation of tTerm * tTerm * tTerm
     | ForLoop of tTerm * tTerm * tTerm
+    | IfStatement of tTerm * tTerm 
+    | IfElseStatement of tTerm * tTerm * tTerm
 
 
     | TermConcat of tTerm * tTerm
@@ -22,4 +31,5 @@ type tTerm =
     | TermIntersection of tTerm * tTerm
     | TermDifference of tTerm * tTerm
     | TermAdd of tTerm * tTerm
+    | TermLt of tTerm * tTerm
 ;;

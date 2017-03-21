@@ -2,11 +2,14 @@ type token =
   | INT of (int)
   | IDENT of (string)
   | LITERAL of (string)
+  | TRUE of (bool)
+  | FALSE of (bool)
   | BEGIN
   | END
   | PRINT
   | VAR_DEC
   | CONCAT
+  | LT
   | UNION
   | INTERSECT
   | DIFF
@@ -18,10 +21,18 @@ type token =
   | FOR
   | TO
   | IN
+  | IF
+  | ELSE
   | LCURLY
   | RCURLY
+  | LPAREN
+  | RPAREN
   | EQUALS
   | PLUS
+  | MINUS
+  | TIMES
+  | DIV
+  | MOD
 
 val start :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> ParseTree.tTerm

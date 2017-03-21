@@ -93,7 +93,7 @@ let rec print_generic env var = match var with
                       );
                     print_endline "}")
   | TermString x -> print_endline x
-(*| TermBoolean x -> if x then print_endline "true" else print_endline "false" *)
+  | TermBool x -> if x then print_endline "true" else print_endline "false" 
 | _ -> print_endline "Blabla"
 ;;
 
@@ -102,6 +102,7 @@ let rec eval env e = match e with
 
   | (TermInteger x) -> (e, env)
   | (TermString x) ->(e, env)
+  | (TermBool x) -> (e, env)
   | (TermSet x) -> (e, env)
   | (TermVar x) -> ((lookup env x), env)
   | (TermArgs args) -> (TermSet(SS.of_list args), env)
@@ -243,6 +244,112 @@ let rec eval env e = match e with
                     | (TermSet(e1''), TermSet(e2'')) -> (TermSet (SS.diff e1'' e2''), env)
                     | _ -> raise Illegal_operation
     )
+  | (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)
+  | (TermPlus(TermInteger(n), e2)) -> (
+        let (e2', env') = (eval env e2) in
+            match e2' with
+                | (TermInteger(m)) -> (TermInteger(n+m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermPlus(e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1',e2') with
+                | (TermInteger(n),TermInteger(m)) -> (TermInteger(n+m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermMinus(TermInteger(n), TermInteger(m))) -> (TermInteger(n-m), env)
+  | (TermMinus(TermInteger(n), e2)) -> (
+        let (e2', env') = (eval env e2) in
+            match e2' with
+                | (TermInteger(m)) -> (TermInteger(n-m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermMinus(e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1',e2') with
+                | (TermInteger(n),TermInteger(m)) -> (TermInteger(n-m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermMult(TermInteger(n), TermInteger(m))) -> (TermInteger(n*m), env)
+  | (TermMult(TermInteger(n), e2)) -> (
+        let (e2', env') = (eval env e2) in
+            match e2' with
+                | (TermInteger(m)) -> (TermInteger(n*m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermMult(e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1',e2') with
+                | (TermInteger(n),TermInteger(m)) -> (TermInteger(n*m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermDiv(TermInteger(n), TermInteger(m))) -> (
+      try 
+          (TermInteger(n/m), env)
+        with Division_by_zero -> failwith ("DIV by zero")
+     )
+  | (TermDiv(TermInteger(n), e2)) -> (
+        let (e2', env') = (eval env e2) in
+            match e2' with
+                | (TermInteger(m)) -> (
+                    try 
+                        TermInteger(n/m),env
+                    with Division_by_zero -> failwith ("DIV by zero")
+                    )
+                | _ -> raise Illegal_operation
+  )
+  | (TermDiv(e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1',e2') with
+                | (TermInteger(n),TermInteger(m)) -> (
+                    try
+                        TermInteger(n/m),env
+                    with Division_by_zero -> failwith ("DIV by zero") 
+                    )
+                | _ -> raise Illegal_operation
+  )
+  | (TermMod(TermInteger(n), TermInteger(m))) -> (TermInteger(n mod m), env)
+  | (TermMod(TermInteger(n), e2)) -> (
+        let (e2', env') = (eval env e2) in
+            match e2' with
+                | (TermInteger(m)) -> (TermInteger(n mod m),env)
+                | _ -> raise Illegal_operation
+  )
+  | (TermMod(e1, e2)) -> (
+      let (e1', env') = (eval env e1) in
+        let (e2', env'') = (eval env' e2) in
+            match (e1',e2') with
+                | (TermInteger(n),TermInteger(m)) -> (TermInteger(n mod m),env)
+                | _ -> raise Illegal_operation
+  )
+  |(TermLt (TermVar(v1), TermVar(v2))) -> (
+      let val1 = lookup env v1 in
+        let val2 = lookup env v2 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 < int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermLt (TermVar(v1), e2)) -> (
+      let (val2, env') = (eval env e2) in
+        let val1 = lookup env v1 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 < int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
   | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
   | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
 
@@ -288,7 +395,51 @@ let rec eval env e = match e with
                     | _ -> raise Illegal_operation
       with UnboundError -> failwith ("Variable " ^ elem ^ " not declared.")
   )
-  (*| (TermPlus(TermInteger(n), TermInteger(m))) -> (TermInteger(n+m), env)*)
+  |(IfStatement (TermVar(elem), statements)) -> (
+      let bool_term = lookup env elem in 
+        match bool_term with 
+            | TermBool (boolean) -> (
+                if boolean then 
+                    eval env statements
+                else
+                    (TermNull, env)
+            )
+            | _ -> raise Illegal_operation
+  )
+  |(IfStatement (bool_op, statements)) -> (
+      let (bool_val, env') = (eval env bool_op) in
+        match bool_val with
+            | TermBool (value) -> (
+                if value then
+                    eval env' statements
+                else
+                    (TermNull, env)
+            )
+            | _ -> raise Illegal_operation
+  )
+  |(IfElseStatement (TermVar(elem),if_stmt, else_stmt)) -> (
+      let bool_term = lookup env elem in 
+        match bool_term with 
+            | TermBool (boolean) -> (
+                if boolean then 
+                    eval env if_stmt 
+                else
+                    eval env else_stmt 
+            )
+            | _ -> raise Illegal_operation
+  )
+  |(IfElseStatement (bool_op, if_stmt, else_stmt)) -> (
+      let (bool_val, env') = (eval env bool_op) in
+        match bool_val with
+            | TermBool (value) -> (
+                if value then
+                    eval env' if_stmt 
+                else
+                    eval env' else_stmt
+            )
+            | _ -> raise Illegal_operation
+  )
+
   | _ -> raise Terminated
 ;;
 

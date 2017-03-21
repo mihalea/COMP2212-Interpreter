@@ -6,9 +6,15 @@ open Parser
 
 rule next = parse
   | ['0'-'9']+ as id { INT (int_of_string id) }
+  | "true" { TRUE true }
+  | "false" { FALSE false }
   | ';' {SEMICOL}
   | '\t' | ' ' | '\n' { next lexbuf }
   | '+' { PLUS }
+  | '-' { MINUS }
+  | '*' { TIMES }
+  | '/' { DIV }
+  | '%' { MOD }
   | "begin" {BEGIN}
   | "end" {END}
   | "var" { VAR_DEC }
@@ -19,9 +25,14 @@ rule next = parse
   | "diff" { DIFF }
   | "add" { ADD }
   | '=' { EQUALS }
+  | '<' { LT }
   | '{' { LCURLY }
   | '}' {RCURLY}
+  | '(' {LPAREN}
+  | ')' {RPAREN}
   | ',' {COMMA}
+  | "if" {IF}
+  | "else" {ELSE}
   | "for" {FOR}
   | "in" {IN}
   | "to" {TO}
