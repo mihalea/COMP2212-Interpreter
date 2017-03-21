@@ -150,7 +150,6 @@ let rec eval env e = match e with
       match (t1, t2) with
         | (":",_) -> (TermString(t2), env)
         | (_,":") -> (TermString(t1), env)
-        | (":",":") -> (TermString(t1), env)
         | (_,_) -> (TermString(t1^t2), env)
     )
   | (TermConcat (TermString(t1), e2)) -> (
@@ -160,7 +159,6 @@ let rec eval env e = match e with
                   match (t1, s) with
                 | (":",_) -> (TermString(s), env)
                 | (_,":") -> (TermString(t1), env)
-                | (":",":") -> (TermString(t1), env)
                 | (_,_) -> (TermString(t1^s), env)
               )
             | _ -> raise Illegal_operation
@@ -173,7 +171,6 @@ let rec eval env e = match e with
                     match (t1, t2) with
                         | (":",_) -> (TermString(t2), env)
                         | (_,":") -> (TermString(t1), env)
-                        | (":",":") -> (TermString(t1), env)
                         | (_,_) -> (TermString(t1^t2), env)
                   )
                 | _ -> raise Illegal_operation
