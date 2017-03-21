@@ -26,6 +26,12 @@ rule next = parse
   | "add" { ADD }
   | '=' { EQUALS }
   | '<' { LT }
+  | "<=" { LTE }
+  | '>' {GT}
+  | ">=" {GTE}
+  | "==" {EQ}
+  | "!=" {NEQ}
+  | '!' {NOT}
   | '{' { LCURLY }
   | '}' {RCURLY}
   | '(' {LPAREN}

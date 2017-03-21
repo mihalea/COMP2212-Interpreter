@@ -10,6 +10,12 @@ type token =
   | VAR_DEC
   | CONCAT
   | LT
+  | LTE
+  | GT
+  | GTE
+  | EQ
+  | NEQ
+  | NOT
   | UNION
   | INTERSECT
   | DIFF

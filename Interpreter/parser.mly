@@ -11,7 +11,8 @@
 %token PRINT
 %token VAR_DEC
 %token CONCAT
-%token LT
+%token LT LTE GT GTE EQ NEQ
+%token NOT
 %token UNION INTERSECT DIFF
 %token SEMICOL, COMMA
 %token ADD
@@ -22,8 +23,9 @@
 %token EQUALS PLUS MINUS TIMES DIV MOD
 %nonassoc PRINT
 %left ADD
-%left LT
+%left LT LTE GT GTE EQ NEQ
 %left PLUS CONCAT UNION INTERSECT DIFF
+%nonassoc NOT
 
 %start start
 %type <ParseTree.tTerm> start
@@ -67,7 +69,7 @@ action_op:
   | int_operation {$1}
   | str_operation {$1}
   | set_operation {$1}
-  | bool_opreration {$1}
+  | bool_operation {$1}
 ;
 
 mut_op:
@@ -79,8 +81,8 @@ exec_op:
   | PRINT action_op { PrintOperation ($2)}
   | FOR ident IN ident LCURLY statements RCURLY { ForOperation ($2, $4, $6)}
   | FOR ident TO int_operation LCURLY statements RCURLY { ForLoop ( $2, $4, $6)}
-  | IF LPAREN bool_opreration RPAREN LCURLY statements RCURLY  { IfStatement ($3, $6) }
-  | IF LPAREN bool_opreration RPAREN LCURLY statements RCURLY ELSE LCURLY statements RCURLY { IfElseStatement ($3, $6, $10) }
+  | IF LPAREN bool_operation RPAREN LCURLY statements RCURLY  { IfStatement ($3, $6) }
+  | IF LPAREN bool_operation RPAREN LCURLY statements RCURLY ELSE LCURLY statements RCURLY { IfElseStatement ($3, $6, $10) }
 ;
 
 int_operation:
@@ -99,10 +101,18 @@ str_operation:
   | str_operation CONCAT str_operation {TermConcat ($1, $3) }
 ;
 
-bool_opreration:
+bool_operation:
   | boolean {$1}
   | ident {$1}
+  | NOT bool_operation  {TermNot($2)}
   | int_operation LT int_operation {TermLt($1,$3)}
+  | int_operation LTE int_operation {TermLte($1,$3)}
+  | int_operation GT int_operation {TermGt($1,$3)}
+  | int_operation GTE int_operation {TermGte($1,$3)}
+  | int_operation EQ int_operation {TermEq($1,$3)}
+  | bool_operation EQ bool_operation {TermEq($1,$3)}
+  | int_operation NEQ int_operation {TermNeq($1,$3)}
+  | bool_operation NEQ bool_operation {TermNeq($1,$3)}
 ;
 
 args:

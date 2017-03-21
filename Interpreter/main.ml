@@ -350,6 +350,246 @@ let rec eval env e = match e with
                 )
                 | _ -> raise Illegal_operation
   )
+  |(TermLt (e1,e2)) -> (
+      let (val1,env') = (eval env e1) in
+        let (val2, env'') = (eval env' e2) in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 < int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermLte (TermVar(v1), TermVar(v2))) -> (
+      let val1 = lookup env v1 in
+        let val2 = lookup env v2 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 <= int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermLte (TermVar(v1), e2)) -> (
+      let (val2, env') = (eval env e2) in
+        let val1 = lookup env v1 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 <= int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermLte (e1,e2)) -> (
+      let (val1,env') = (eval env e1) in
+        let (val2, env'') = (eval env' e2) in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 <= int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermGt (TermVar(v1), TermVar(v2))) -> (
+      let val1 = lookup env v1 in
+        let val2 = lookup env v2 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 > int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermGt (TermVar(v1), e2)) -> (
+      let (val2, env') = (eval env e2) in
+        let val1 = lookup env v1 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 > int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermGt (e1,e2)) -> (
+      let (val1,env') = (eval env e1) in
+        let (val2, env'') = (eval env' e2) in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 > int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermGte (TermVar(v1), TermVar(v2))) -> (
+      let val1 = lookup env v1 in
+        let val2 = lookup env v2 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 >= int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermGte (TermVar(v1), e2)) -> (
+      let (val2, env') = (eval env e2) in
+        let val1 = lookup env v1 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 >= int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermGte (e1,e2)) -> (
+      let (val1,env') = (eval env e1) in
+        let (val2, env'') = (eval env' e2) in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 >= int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermEq (TermVar(v1), TermVar(v2))) -> (
+      let val1 = lookup env v1 in
+        let val2 = lookup env v2 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 == int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                |(TermBool(bool1), TermBool(bool2)) -> (
+                    if bool1 == bool2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermEq (TermVar(v1), e2)) -> (
+      let (val2, env') = (eval env e2) in
+        let val1 = lookup env v1 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 == int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                |(TermBool(bool1), TermBool(bool2)) -> (
+                    if bool1 == bool2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermEq (e1,e2)) -> (
+      let (val1,env') = (eval env e1) in
+        let (val2, env'') = (eval env' e2) in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 == int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                |(TermBool(bool1), TermBool(bool2)) -> (
+                    if bool1 == bool2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermNeq (TermVar(v1), TermVar(v2))) -> (
+      let val1 = lookup env v1 in
+        let val2 = lookup env v2 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 != int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                |(TermBool(bool1), TermBool(bool2)) -> (
+                    if bool1 != bool2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermNeq (TermVar(v1), e2)) -> (
+      let (val2, env') = (eval env e2) in
+        let val1 = lookup env v1 in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 != int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                |(TermBool(bool1), TermBool(bool2)) -> (
+                    if bool1 != bool2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  |(TermNeq (e1,e2)) -> (
+      let (val1,env') = (eval env e1) in
+        let (val2, env'') = (eval env' e2) in
+            match (val1, val2) with
+                (TermInteger(int1), TermInteger(int2)) -> (
+                    if int1 != int2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                |(TermBool(bool1), TermBool(bool2)) -> (
+                    if bool1 != bool2 then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                )
+                | _ -> raise Illegal_operation
+  )
+  | (TermNot (TermVar (v1))) -> (
+      let val1 = lookup env v1 in
+        match val1 with 
+            | TermBool(bool1) -> (TermBool(not bool1),env)
+            | _ -> raise Illegal_operation
+  )
+  | (TermNot (e1)) -> (
+        let (e1', env') = (eval env e1) in
+            match e1' with 
+                | TermBool(bool1) -> (TermBool(not bool1),env)
+                | _ -> raise Illegal_operation
+  )
   | (PrintOperation x) when (isValue x) -> print_generic env x;(TermNull, env)
   | (PrintOperation x) -> let (e', env') =  (eval env x) in print_generic env' e';(TermNull, env')
 
