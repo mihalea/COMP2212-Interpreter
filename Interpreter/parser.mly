@@ -111,8 +111,10 @@ bool_operation:
   | int_operation GTE int_operation {TermGte($1,$3)}
   | int_operation EQ int_operation {TermEq($1,$3)}
   | bool_operation EQ bool_operation {TermEq($1,$3)}
+  | str_operation EQ str_operation {TermEq($1,$3)}
   | int_operation NEQ int_operation {TermNeq($1,$3)}
   | bool_operation NEQ bool_operation {TermNeq($1,$3)}
+  | str_operation NEQ str_operation {TermNeq($1,$3)}
 ;
 
 args:

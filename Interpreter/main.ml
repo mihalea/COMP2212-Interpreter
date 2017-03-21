@@ -486,11 +486,17 @@ let rec eval env e = match e with
                     else
                         (TermBool(false),env)
                 )
+                |(TermString(str1), (TermString(str2))) -> (
+                    if (String.equal str1 str2) then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                ) 
                 | _ -> raise Illegal_operation
   )
   |(TermEq (TermVar(v1), e2)) -> (
       let (val2, env') = (eval env e2) in
-        let val1 = lookup env v1 in
+          let val1 = lookup env' v1 in
             match (val1, val2) with
                 (TermInteger(int1), TermInteger(int2)) -> (
                     if int1 == int2 then
@@ -504,6 +510,12 @@ let rec eval env e = match e with
                     else
                         (TermBool(false),env)
                 )
+                |(TermString(str1), (TermString(str2))) -> (
+                    if (String.equal str1 str2) then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                ) 
                 | _ -> raise Illegal_operation
   )
   |(TermEq (e1,e2)) -> (
@@ -522,6 +534,12 @@ let rec eval env e = match e with
                     else
                         (TermBool(false),env)
                 )
+                |(TermString(str1), (TermString(str2))) -> (
+                    if (String.equal str1 str2) then
+                        (TermBool(true),env)
+                    else
+                        (TermBool(false),env)
+                ) 
                 | _ -> raise Illegal_operation
   )
   |(TermNeq (TermVar(v1), TermVar(v2))) -> (
@@ -540,11 +558,17 @@ let rec eval env e = match e with
                     else
                         (TermBool(false),env)
                 )
+                |(TermString(str1), TermString(str2)) -> (
+                    if (String.equal str1 str2) then
+                        (TermBool(false),env)
+                    else
+                        (TermBool(true),env)
+                ) 
                 | _ -> raise Illegal_operation
   )
   |(TermNeq (TermVar(v1), e2)) -> (
       let (val2, env') = (eval env e2) in
-        let val1 = lookup env v1 in
+        let val1 = lookup env' v1 in
             match (val1, val2) with
                 (TermInteger(int1), TermInteger(int2)) -> (
                     if int1 != int2 then
@@ -558,6 +582,12 @@ let rec eval env e = match e with
                     else
                         (TermBool(false),env)
                 )
+                |(TermString(str1), TermString(str2)) -> (
+                    if (String.equal str1 str2) then
+                        (TermBool(false),env)
+                    else
+                        (TermBool(true),env)
+                ) 
                 | _ -> raise Illegal_operation
   )
   |(TermNeq (e1,e2)) -> (
@@ -576,6 +606,12 @@ let rec eval env e = match e with
                     else
                         (TermBool(false),env)
                 )
+                |(TermString(str1), TermString(str2)) -> (
+                    if (String.equal str1 str2) then
+                        (TermBool(false),env)
+                    else
+                        (TermBool(true),env)
+                ) 
                 | _ -> raise Illegal_operation
   )
   | (TermNot (TermVar (v1))) -> (
