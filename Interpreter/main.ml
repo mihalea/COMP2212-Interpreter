@@ -47,6 +47,14 @@ let rec isValue e = match e with
   | _ -> false
 ;;
 
+let makeSet list = 
+  let rec make l acc = match l with
+    | [] -> acc
+    | (h::t)  -> make t (SS.add h acc)
+  in
+  make list SS.empty 	
+;;
+
 let splitInput line =
   let delim = Str.regexp "[{},]" in
     let split = Str.split(delim) in (
@@ -66,7 +74,7 @@ let rec readInput env lineCount =
     if (Str.string_match (Str.regexp "^[0-9]+$") line 0) then
       addBinding env ("K", TermInteger(int_of_string line))
     else (
-      readInput (addBinding env (("INPUT" ^ (string_of_int lineCount)), TermSet(SS.of_list (splitInput line)))) (lineCount + 1)
+      readInput (addBinding env (("INPUT" ^ (string_of_int lineCount)), TermSet(makeSet (splitInput line)))) (lineCount + 1)
     )
   with
   End_of_file -> env;
@@ -105,7 +113,7 @@ let rec eval env e = match e with
   | (TermBool x) -> (e, env)
   | (TermSet x) -> (e, env)
   | (TermVar x) -> ((lookup env x), env)
-  | (TermArgs args) -> (TermSet(SS.of_list args), env)
+  | (TermArgs args) -> (TermSet(makeSet args), env)
 
   | (Declaration(TermVar(k), v)) when (isValue v) -> (TermNull, addBinding env (k, v))
   | (Declaration(TermVar(k), v)) -> (
@@ -485,7 +493,7 @@ let rec eval env e = match e with
                         (TermBool(false),env)
                 )
                 |(TermString(str1), (TermString(str2))) -> (
-                    if (String.equal str1 str2) then
+                    if ((String.compare str1 str2) == 0) then
                         (TermBool(true),env)
                     else
                         (TermBool(false),env)
@@ -510,7 +518,7 @@ let rec eval env e = match e with
                         (TermBool(false),env)
                 )
                 |(TermString(str1), (TermString(str2))) -> (
-                    if (String.equal str1 str2) then
+                    if ((String.compare str1 str2) == 0) then
                         (TermBool(true),env)
                     else
                         (TermBool(false),env)
@@ -535,7 +543,7 @@ let rec eval env e = match e with
                         (TermBool(false),env)
                 )
                 |(TermString(str1), (TermString(str2))) -> (
-                    if (String.equal str1 str2) then
+                    if ((String.compare str1 str2) == 0) then
                         (TermBool(true),env)
                     else
                         (TermBool(false),env)
@@ -560,7 +568,7 @@ let rec eval env e = match e with
                         (TermBool(false),env)
                 )
                 |(TermString(str1), TermString(str2)) -> (
-                    if (String.equal str1 str2) then
+                    if ((String.compare str1 str2) == 0) then
                         (TermBool(false),env)
                     else
                         (TermBool(true),env)
@@ -585,7 +593,7 @@ let rec eval env e = match e with
                         (TermBool(false),env)
                 )
                 |(TermString(str1), TermString(str2)) -> (
-                    if (String.equal str1 str2) then
+                    if ((String.compare str1 str2) == 0) then
                         (TermBool(false),env)
                     else
                         (TermBool(true),env)
@@ -610,7 +618,7 @@ let rec eval env e = match e with
                         (TermBool(false),env)
                 )
                 |(TermString(str1), TermString(str2)) -> (
-                    if (String.equal str1 str2) then
+                    if ((String.compare str1 str2) == 0) then
                         (TermBool(false),env)
                     else
                         (TermBool(true),env)
