@@ -1,12 +1,8 @@
 begin
-  var out = {};
-  for w in INPUT0 {
-    out = out add w ^ "a";
-  };
-
-  for w in INPUT1 {
-    out = out add w ^ "b";
-  };
-
-  print out;
+    var out = {};
+    var set1 = INPUT0 intersect INPUT1;
+    for x in set1 {
+        out = out add "a" ^ x;
+    };
+    print out;
 end

@@ -1,16 +1,9 @@
 begin
-  var set1 = INPUT0 union INPUT1;
-  var set2 = INPUT0 union INPUT2;
+    var inters1 = INPUT0 intersect INPUT1;
+    var union2 = INPUT1 union INPUT2;
+    var res1 = inters1 union INPUT2;
+    var res2 = INPUT0 intersect union2;
 
-  var out = {};
-  for x in set1 {
-    out = out add x ^ "a";
-  };
-  print out;
-
-  out = {};
-  for x in set2 {
-    out = out add x ^ "b";
-  };
-  print out;
+    print res1;
+    print res2;
 end
