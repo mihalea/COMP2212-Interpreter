@@ -9,14 +9,22 @@ rule next = parse
   | ';' {SEMICOL}
   | '\t' | ' ' | '\n' { next lexbuf }
   | '+' { PLUS }
+  | "begin" {BEGIN}
+  | "end" {END}
   | "var" { VAR_DEC }
   | "print" { PRINT }
   | '^' {CONCAT}
+  | "union" {UNION}
+  | "intersect" {INTERSECT}
+  | "diff" { DIFF }
+  | "add" { ADD }
   | '=' { EQUALS }
   | '{' { LCURLY }
   | '}' {RCURLY}
-  | '"' {QUOTE}
+  | ',' {COMMA}
   | "for" {FOR}
   | "in" {IN}
-  | ['a'-'z''A'-'Z''0'-'9']+ as id { IDENT id }
+  | "to" {TO}
+  | '"'[':''a'-'z''A'-'Z''0'-'9']+'"' as lxm { LITERAL (List.nth (Str.split_delim (Str.regexp "\"") lxm) 1) }
+  | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']* as id { IDENT id }
   | eof { EOF }
